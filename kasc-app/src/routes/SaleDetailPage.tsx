@@ -6,6 +6,7 @@ import { friendlyMessage } from '../lib/errors';
 
 const CURRENCY = '₹';
 const fmt = (n: number) => `${CURRENCY}${Number(n).toFixed(2)}`;
+const SHOP_NAME = 'Wryston';
 
 const kasc = makeKasc(supabase);
 
@@ -90,7 +91,7 @@ export function SaleDetailPage() {
         <p className="text-slate-600 text-sm">
           This bill may not exist, or you don’t have permission to view it.
         </p>
-        <Link to="/" className="text-slate-900 underline text-sm">Back home</Link>
+        <Link to="/sales" className="text-slate-900 underline text-sm">Back to sales</Link>
       </div>
     );
   }
@@ -139,8 +140,14 @@ export function SaleDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 print:bg-white print:p-0">
       <div className="max-w-3xl mx-auto space-y-4">
+
+        <div className="hidden print:block text-center mb-2">
+          <h1 className="text-2xl font-bold">{SHOP_NAME}</h1>
+          <p className="text-xs text-slate-500 mt-1">Sales receipt</p>
+        </div>
+
         <div className="flex items-start justify-between gap-2">
           <div>
             <h1 className="text-2xl font-semibold">Bill {sale.bill_no}</h1>
@@ -148,7 +155,7 @@ export function SaleDetailPage() {
               {new Date(sale.created_at).toLocaleString()} · {sale.customer_name}
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 print:hidden">
             <button
               onClick={() => window.print()}
               className="border rounded px-3 py-1.5 text-sm"
@@ -156,10 +163,10 @@ export function SaleDetailPage() {
               Print
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/sales')}
               className="text-sm text-slate-600 hover:underline"
             >
-              ← Home
+              ← Sales
             </button>
           </div>
         </div>
@@ -170,7 +177,7 @@ export function SaleDetailPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow p-4 space-y-3">
+        <div className="bg-white rounded-xl shadow p-4 space-y-3 print:shadow-none print:border print:border-slate-300">
           <h2 className="font-semibold">Items</h2>
           <table className="w-full text-sm">
             <thead className="text-left text-slate-500 border-b">
@@ -236,7 +243,7 @@ export function SaleDetailPage() {
         </div>
 
         {sale.status === 'completed' && (canPay || canRefund || canVoid) && (
-          <div className="bg-white rounded-xl shadow p-4 space-y-3">
+          <div className="bg-white rounded-xl shadow p-4 space-y-3 print:hidden">
             <h2 className="font-semibold">Actions</h2>
 
             {!action && (
@@ -335,7 +342,7 @@ export function SaleDetailPage() {
         )}
 
         {hasHistory && (
-          <div className="bg-white rounded-xl shadow p-4 space-y-2">
+          <div className="bg-white rounded-xl shadow p-4 space-y-2 print:shadow-none print:border print:border-slate-300">
             <h2 className="font-semibold">History</h2>
             <ul className="text-sm divide-y">
               {payments.map((p) => (
@@ -363,6 +370,10 @@ export function SaleDetailPage() {
             </ul>
           </div>
         )}
+
+        <p className="hidden print:block text-center text-xs text-slate-500 pt-4">
+          Thank you for your business.
+        </p>
       </div>
     </div>
   );
