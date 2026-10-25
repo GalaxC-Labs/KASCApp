@@ -4,6 +4,7 @@ import { RequireAuth } from './auth/RequireAuth';
 import { LoginPage } from './auth/LoginPage';
 import { HomePage } from './routes/HomePage';
 import { NewSalePage } from './routes/NewSalePage';
+import { SaleDetailPage } from './routes/SaleDetailPage';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
           <Route path="/sales/new" element={<RequireAuth><NewSalePage /></RequireAuth>} />
+          <Route path="/sales/:id" element={<RequireAuth><SaleDetailPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
