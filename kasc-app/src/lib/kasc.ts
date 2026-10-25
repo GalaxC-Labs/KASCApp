@@ -77,7 +77,29 @@ export function makeKasc(supabase: SupabaseClient) {
       if (error) throw asKascError(error);
       return data as { sale_id: string; status: 'voided' };
     },
+    async setUserRole(userId: string, role: Role) {
+      const { data, error } = await supabase.rpc('set_user_role', {
+        p_user_id: userId, p_role: role,
+      });
+      if (error) throw asKascError(error);
+      return data as { user_id: string; role: Role };
+    },
 
+    async setUserActive(userId: string, active: boolean) {
+      const { data, error } = await supabase.rpc('set_user_active', {
+        p_user_id: userId, p_active: active,
+      });
+      if (error) throw asKascError(error);
+      return data as { user_id: string; active: boolean };
+    },
+
+    async setUserDisplayName(userId: string, name: string) {
+      const { data, error } = await supabase.rpc('set_user_display_name', {
+        p_user_id: userId, p_name: name,
+      });
+      if (error) throw asKascError(error);
+      return data as { user_id: string; display_name: string };
+    },
     async adjustStock(input: {
       productId: string;
       delta: number;
