@@ -6,6 +6,7 @@ import { HomePage } from './routes/HomePage';
 import { NewSalePage } from './routes/NewSalePage';
 import { SaleDetailPage } from './routes/SaleDetailPage';
 import { SalesListPage } from './routes/SalesListPage';
+import { ProductsPage } from './routes/ProductsPage';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/sales" element={<RequireAuth><SalesListPage /></RequireAuth>} />
           <Route path="/sales/new" element={<RequireAuth><NewSalePage /></RequireAuth>} />
           <Route path="/sales/:id" element={<RequireAuth><SaleDetailPage /></RequireAuth>} />
+          <Route path="/products" element={<RequireAuth><ProductsPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
