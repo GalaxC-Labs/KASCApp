@@ -11,6 +11,7 @@ const friendlyErrors: Record<string, string> = {
   'Not an active user': 'Your account is inactive. Contact the shop owner.',
   'Owner only': 'Only the shop owner can do that.',
   'duplicate key value': 'A product with that SKU already exists.',
+  'User not found': "That user no longer exists.",
 };
 
 function extractMessage(e: unknown): string {
