@@ -10,6 +10,7 @@ const friendlyErrors: Record<string, string> = {
   'Cannot record payment on a voided': 'This sale is voided — payments are blocked.',
   'Not an active user': 'Your account is inactive. Contact the shop owner.',
   'Owner only': 'Only the shop owner can do that.',
+  'duplicate key value': 'A product with that SKU already exists.',
 };
 
 function extractMessage(e: unknown): string {
