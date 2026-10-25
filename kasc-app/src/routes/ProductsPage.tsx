@@ -4,9 +4,7 @@ import { supabase } from '../lib/supabase';
 import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
 import { useAuth } from '../auth/useAuth';
-
-const CURRENCY = '₹';
-const fmt = (n: number) => `${CURRENCY}${Number(n).toFixed(2)}`;
+import { formatCurrency as fmt } from '../lib/format';
 
 const kasc = makeKasc(supabase);
 
@@ -51,6 +49,7 @@ export function ProductsPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
+  const { push } = useToast();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [costs, setCosts] = useState<Record<string, number>>({});
@@ -176,7 +175,7 @@ export function ProductsPage() {
           );
         if (cErr) throw cErr;
       }
-
+      push(editing.id ? 'Product updated' : 'Product created', 'success');
       await load();
       setEditing(null);
     } catch (err) {
@@ -200,6 +199,7 @@ export function ProductsPage() {
         movementType: adjType,
         note: adjNote,
       });
+      push('Stock adjusted', 'success');
       await load();
       setAdjusting(null);
       setAdjDelta('');

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
-import { RequireAuth } from './auth/RequireAuth';
+import { ToastProvider } from './lib/toast';
+import { ProtectedLayout } from './auth/ProtectedLayout';
 import { LoginPage } from './auth/LoginPage';
 import { ForgotPasswordPage } from './auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './auth/ResetPasswordPage';
@@ -14,20 +15,26 @@ import { SettingsPage } from './routes/SettingsPage';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
-          <Route path="/sales" element={<RequireAuth><SalesListPage /></RequireAuth>} />
-          <Route path="/sales/new" element={<RequireAuth><NewSalePage /></RequireAuth>} />
-          <Route path="/sales/:id" element={<RequireAuth><SaleDetailPage /></RequireAuth>} />
-          <Route path="/products" element={<RequireAuth><ProductsPage /></RequireAuth>} />
-          <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            <Route element={<ProtectedLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/sales" element={<SalesListPage />} />
+              <Route path="/sales/new" element={<NewSalePage />} />
+              <Route path="/sales/:id" element={<SaleDetailPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

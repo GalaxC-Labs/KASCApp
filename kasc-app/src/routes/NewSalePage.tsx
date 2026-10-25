@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc, CreateSaleResult } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
-
-const CURRENCY = '₹';
-const fmt = (n: number) => `${CURRENCY}${n.toFixed(2)}`;
+import { formatCurrency as fmt } from '../lib/format';
 
 const kasc = makeKasc(supabase);
 
@@ -24,7 +22,8 @@ type CartItem = { product: Product; quantity: number };
 
 export function NewSalePage() {
   const navigate = useNavigate();
-
+  const { push } = useToast();
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -135,6 +134,7 @@ export function NewSalePage() {
         clientRef,
       });
       setSuccess({ result, items });
+      push(`Sale recorded · ${result.bill_no}`, 'success');
       setItems([]);
     } catch (err) {
       setError(friendlyMessage(err));

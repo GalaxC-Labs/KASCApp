@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { supabase } from '../lib/supabase';
+import { formatCurrency } from '../lib/format';
 
 type LowStockItem = {
   id: string;
@@ -12,78 +13,136 @@ type LowStockItem = {
   unit: string;
 };
 
+type TodayStats = {
+  count: number;
+  collected: number;
+  outstanding: number;
+};
+
 export function HomePage() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
 
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
   const [lowStockLoading, setLowStockLoading] = useState(true);
+  const [stats, setStats] = useState<TodayStats>({ count: 0, collected: 0, outstanding: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
+
     (async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, sku, stock_qty, reorder_level, unit')
-        .eq('is_active', true)
-        .order('name');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [productsRes, salesRes] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, sku, stock_qty, reorder_level, unit')
+          .eq('is_active', true)
+          .order('name'),
+        supabase
+          .from('sales')
+          .select('total, amount_paid, status')
+          .gte('created_at', today.toISOString())
+          .eq('status', 'completed'),
+      ]);
+
       if (!active) return;
-      const low = ((data ?? []) as LowStockItem[]).filter(
+
+      const low = ((productsRes.data ?? []) as LowStockItem[]).filter(
         (p) => Number(p.stock_qty) <= Number(p.reorder_level),
       );
       setLowStock(low);
       setLowStockLoading(false);
+
+      const rows = (salesRes.data ?? []) as Array<{
+        total: number;
+        amount_paid: number;
+      }>;
+      const count = rows.length;
+      const collected = rows.reduce((a, r) => a + Number(r.amount_paid), 0);
+      const outstanding = rows.reduce(
+        (a, r) => a + Math.max(0, Number(r.total) - Number(r.amount_paid)),
+        0,
+      );
+      setStats({ count, collected, outstanding });
+      setStatsLoading(false);
     })();
+
     return () => {
       active = false;
     };
   }, []);
 
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  })();
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-xl mx-auto space-y-4">
-        <div className="bg-white rounded-xl shadow p-6 space-y-4">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div>
           <h1 className="text-2xl font-semibold">
-            Welcome, {profile?.display_name || 'user'}
+            {greeting}
+            {profile?.display_name ? `, ${profile.display_name}` : ''}
           </h1>
-          <p className="text-slate-600 text-sm">
-            Role: <span className="font-mono">{profile?.role}</span>
-          </p>
-          <div className="flex flex-col gap-2 pt-2">
-            <Link
-              to="/sales/new"
-              className="bg-slate-900 text-white rounded px-4 py-2 text-center"
-            >
-              New sale
-            </Link>
-            <Link
-              to="/sales"
-              className="border rounded px-4 py-2 text-center"
-            >
-              Sales history
-            </Link>
-            <Link
-              to="/products"
-              className="border rounded px-4 py-2 text-center"
-            >
-              Products
-            </Link>
-          {isOwner && (
-            <Link
-              to="/settings"
-              className="border rounded px-4 py-2 text-center"
-            >
-              Settings
-            </Link>
-          )}
-          </div>
-          <button onClick={signOut} className="border rounded px-3 py-1.5 text-sm">
-            Sign out
-          </button>
+          <p className="text-slate-500 text-sm capitalize">{profile?.role}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow p-6 space-y-3">
-          <div className="flex items-baseline justify-between">
+        <div className="bg-white rounded-xl shadow p-4 grid grid-cols-3 gap-4">
+          {statsLoading ? (
+            <>
+              <div className="text-xs text-slate-400">Loading today…</div>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="text-xs text-slate-500">Sales today</div>
+                <div className="text-xl font-semibold mt-1">{stats.count}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Collected</div>
+                <div className="text-xl font-semibold mt-1 text-emerald-700">
+                  {formatCurrency(stats.collected)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Outstanding</div>
+                <div className="text-xl font-semibold mt-1 text-amber-700">
+                  {formatCurrency(stats.outstanding)}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Link
+            to="/sales/new"
+            className="block bg-slate-900 text-white rounded-xl shadow p-5 hover:bg-slate-800"
+          >
+            <div className="text-lg font-semibold">New sale</div>
+            <div className="text-xs text-slate-300 mt-1">
+              Start a bill — add items, take payment
+            </div>
+          </Link>
+          <Link
+            to="/sales"
+            className="block bg-white rounded-xl shadow p-5 hover:bg-slate-50"
+          >
+            <div className="text-lg font-semibold">Sales history</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Search, filter, follow up on payments
+            </div>
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-4">
+          <div className="flex items-baseline justify-between mb-3">
             <h2 className="font-semibold">Low stock</h2>
             {lowStock.length > 0 && (
               <span className="text-xs bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">
@@ -96,7 +155,7 @@ export function HomePage() {
             <p className="text-slate-500 text-sm">Checking…</p>
           ) : lowStock.length === 0 ? (
             <p className="text-slate-500 text-sm">
-              All products are above their reorder level. 🎉
+              All products are above their reorder level.
             </p>
           ) : (
             <ul className="divide-y">
@@ -123,16 +182,10 @@ export function HomePage() {
           {lowStock.length > 8 && (
             <Link
               to="/products"
-              className="block text-sm text-slate-700 underline pt-1"
+              className="block text-sm text-slate-700 underline pt-2"
             >
-              See all {lowStock.length} low-stock items →
+              See all {lowStock.length} →
             </Link>
-          )}
-
-          {isOwner && lowStock.length > 0 && (
-            <p className="text-xs text-slate-500 pt-1">
-              Use <strong>Products → Adjust</strong> to record incoming stock.
-            </p>
           )}
         </div>
       </div>

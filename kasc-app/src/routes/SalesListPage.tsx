@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/useAuth';
-
-const CURRENCY = '₹';
-const fmt = (n: number) => `${CURRENCY}${Number(n).toFixed(2)}`;
+import { formatCurrency as fmt } from '../lib/format';
 
 type Sale = {
   id: string;

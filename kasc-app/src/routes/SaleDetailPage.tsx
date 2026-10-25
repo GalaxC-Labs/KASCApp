@@ -3,9 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
+import { formatCurrency as fmt } from '../lib/format';
+import { useToast } from '../lib/toast';
 
-const CURRENCY = '₹';
-const fmt = (n: number) => `${CURRENCY}${Number(n).toFixed(2)}`;
 const SHOP_NAME = 'Wryston';
 
 const kasc = makeKasc(supabase);
@@ -45,6 +45,7 @@ type Action = 'pay' | 'refund' | 'void' | null;
 export function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { push } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +131,18 @@ export function SaleDetailPage() {
       } else if (action === 'void') {
         await kasc.voidSale(sale.id, noteInput);
       }
+      const label =
+        action === 'pay' ? 'Payment recorded'
+        : action === 'refund' ? 'Refund recorded'
+        : 'Sale voided';
+      push(
+        action === 'pay'
+          ? 'Payment recorded'
+          : action === 'refund'
+          ? 'Refund recorded'
+          : 'Sale voided',
+        'success',
+      );
       await load();
       closeAction();
     } catch (err) {
