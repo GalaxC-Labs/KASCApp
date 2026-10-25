@@ -25,6 +25,12 @@ export function HomePage() {
           >
             Sales history
           </Link>
+          <Link
+            to="/products"
+            className="border rounded px-4 py-2 text-center"
+          >
+            Products
+          </Link>
         </div>
         <button onClick={signOut} className="border rounded px-3 py-1.5 text-sm">
           Sign out
