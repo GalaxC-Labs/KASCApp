@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 export function LoginPage() {
@@ -57,6 +57,12 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded px-3 py-2"
           />
+          <Link
+            to="/forgot-password"
+            className="block text-xs text-slate-600 underline mt-1 text-right"
+          >
+            Forgot password?
+          </Link>
         </div>
         {error && (
           <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">

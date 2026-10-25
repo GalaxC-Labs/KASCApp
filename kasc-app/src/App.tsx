@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { RequireAuth } from './auth/RequireAuth';
 import { LoginPage } from './auth/LoginPage';
+import { ForgotPasswordPage } from './auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './auth/ResetPasswordPage';
 import { HomePage } from './routes/HomePage';
 import { NewSalePage } from './routes/NewSalePage';
 import { SaleDetailPage } from './routes/SaleDetailPage';
@@ -15,6 +17,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
           <Route path="/sales" element={<RequireAuth><SalesListPage /></RequireAuth>} />
           <Route path="/sales/new" element={<RequireAuth><NewSalePage /></RequireAuth>} />
