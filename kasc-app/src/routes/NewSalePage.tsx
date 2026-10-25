@@ -199,10 +199,16 @@ export function NewSalePage() {
               </dd>
             </div>
           </dl>
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 flex-wrap">
+            <button
+              onClick={() => navigate(`/sales/${result.sale_id}`)}
+              className="bg-slate-900 text-white rounded px-4 py-2 text-sm"
+            >
+              View details
+            </button>
             <button
               onClick={resetForNewSale}
-              className="bg-slate-900 text-white rounded px-4 py-2 text-sm"
+              className="border rounded px-4 py-2 text-sm"
             >
               New sale
             </button>
@@ -228,7 +234,7 @@ export function NewSalePage() {
             className="text-sm text-slate-600 hover:underline"
           >
             ← Home
-          </button>
+          </>
         </div>
 
         {loadError && (
@@ -269,13 +275,13 @@ export function NewSalePage() {
                           {inCart ? ` · ${inCart.quantity} in cart` : ''}
                         </div>
                       </div>
-                      <button
+                      <
                         onClick={() => addProduct(p)}
                         disabled={p.stock_qty <= 0}
                         className="shrink-0 border rounded px-3 py-1 text-sm disabled:opacity-40"
                       >
                         Add
-                      </button>
+                      </>
                     </li>
                   );
                 })}
@@ -304,13 +310,13 @@ export function NewSalePage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <button
-                          type="button"
+                        <
+                          type=""
                           onClick={() => setQty(i.product.id, i.quantity - 1)}
                           className="w-7 h-7 border rounded"
                         >
                           −
-                        </button>
+                        </>
                         <input
                           type="number"
                           min={0}
@@ -321,13 +327,13 @@ export function NewSalePage() {
                           }
                           className="w-20 border rounded px-2 py-1 text-right"
                         />
-                        <button
-                          type="button"
+                        <
+                          type=""
                           onClick={() => setQty(i.product.id, i.quantity + 1)}
                           className="w-7 h-7 border rounded"
                         >
                           +
-                        </button>
+                        </>
                         <span className="ml-2 text-slate-500 text-xs">
                           @ {fmt(i.product.selling_price)}/{i.product.unit}
                         </span>
@@ -412,13 +418,13 @@ export function NewSalePage() {
               </div>
             )}
 
-            <button
+            <
               type="submit"
               disabled={submitting || items.length === 0}
               className="w-full bg-slate-900 text-white rounded py-2 disabled:opacity-50"
             >
               {submitting ? 'Saving…' : `Complete sale · ${fmt(total)}`}
-            </button>
+            </>
           </form>
         </div>
       </div>
