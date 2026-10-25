@@ -36,7 +36,6 @@ export function NewSalePage() {
   const [paidInput, setPaidInput] = useState('');
   const [paidTouched, setPaidTouched] = useState(false);
 
-  // Minted once per cart; re-used on retry so double-clicks are idempotent.
   const [clientRef, setClientRef] = useState(() => crypto.randomUUID());
 
   const [submitting, setSubmitting] = useState(false);
@@ -234,7 +233,7 @@ export function NewSalePage() {
             className="text-sm text-slate-600 hover:underline"
           >
             ← Home
-          </>
+          </button>
         </div>
 
         {loadError && (
@@ -244,7 +243,6 @@ export function NewSalePage() {
         )}
 
         <div className="grid lg:grid-cols-2 gap-4">
-          {/* Product picker */}
           <div className="bg-white rounded-xl shadow p-4 space-y-3">
             <input
               type="search"
@@ -275,13 +273,13 @@ export function NewSalePage() {
                           {inCart ? ` · ${inCart.quantity} in cart` : ''}
                         </div>
                       </div>
-                      <
+                      <button
                         onClick={() => addProduct(p)}
                         disabled={p.stock_qty <= 0}
                         className="shrink-0 border rounded px-3 py-1 text-sm disabled:opacity-40"
                       >
                         Add
-                      </>
+                      </button>
                     </li>
                   );
                 })}
@@ -289,7 +287,6 @@ export function NewSalePage() {
             )}
           </div>
 
-          {/* Cart */}
           <form
             onSubmit={onSubmit}
             className="bg-white rounded-xl shadow p-4 space-y-3"
@@ -310,13 +307,13 @@ export function NewSalePage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <
-                          type=""
+                        <button
+                          type="button"
                           onClick={() => setQty(i.product.id, i.quantity - 1)}
                           className="w-7 h-7 border rounded"
                         >
                           −
-                        </>
+                        </button>
                         <input
                           type="number"
                           min={0}
@@ -327,13 +324,13 @@ export function NewSalePage() {
                           }
                           className="w-20 border rounded px-2 py-1 text-right"
                         />
-                        <
-                          type=""
+                        <button
+                          type="button"
                           onClick={() => setQty(i.product.id, i.quantity + 1)}
                           className="w-7 h-7 border rounded"
                         >
                           +
-                        </>
+                        </button>
                         <span className="ml-2 text-slate-500 text-xs">
                           @ {fmt(i.product.selling_price)}/{i.product.unit}
                         </span>
@@ -418,13 +415,13 @@ export function NewSalePage() {
               </div>
             )}
 
-            <
+            <button
               type="submit"
               disabled={submitting || items.length === 0}
               className="w-full bg-slate-900 text-white rounded py-2 disabled:opacity-50"
             >
               {submitting ? 'Saving…' : `Complete sale · ${fmt(total)}`}
-            </>
+            </button>
           </form>
         </div>
       </div>
