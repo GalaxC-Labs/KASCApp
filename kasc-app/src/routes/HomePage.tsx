@@ -68,6 +68,14 @@ export function HomePage() {
             >
               Products
             </Link>
+          {isOwner && (
+            <Link
+              to="/settings"
+              className="border rounded px-4 py-2 text-center"
+            >
+              Settings
+            </Link>
+          )}
           </div>
           <button onClick={signOut} className="border rounded px-3 py-1.5 text-sm">
             Sign out
