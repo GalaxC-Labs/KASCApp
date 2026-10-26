@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths: ['supabase/migrations/**']
+  workflow_dispatch: {}
 
 jobs:
   deploy:
@@ -16,4 +17,7 @@ jobs:
           version: latest
 
       - name: Push migrations
-        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}?sslmode=require"
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          supabase db push --db-url "postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?sslmode=require"
