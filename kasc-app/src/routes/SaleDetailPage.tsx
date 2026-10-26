@@ -5,8 +5,7 @@ import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
 import { formatCurrency as fmt } from '../lib/format';
 import { useToast } from '../lib/toast';
-
-const SHOP_NAME = 'Wryston';
+import { SHOP_NAME, SHOP_ADDRESS, SHOP_PHONE } from '../lib/config';
 
 const kasc = makeKasc(supabase);
 
@@ -151,6 +150,12 @@ export function SaleDetailPage() {
 
         <div className="hidden print:block text-center mb-2">
           <h1 className="text-2xl font-bold">{SHOP_NAME}</h1>
+          {SHOP_ADDRESS && (
+            <p className="text-xs text-slate-600 mt-1">{SHOP_ADDRESS}</p>
+          )}
+          {SHOP_PHONE && (
+            <p className="text-xs text-slate-600">{SHOP_PHONE}</p>
+          )}
           <p className="text-xs text-slate-500 mt-1">Sales receipt</p>
         </div>
 

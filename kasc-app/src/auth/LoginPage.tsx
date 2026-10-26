@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
+import { SHOP_NAME } from '../lib/config';
 
 export function LoginPage() {
   const { session, loading, signIn } = useAuth();
@@ -35,7 +36,10 @@ export function LoginPage() {
         onSubmit={onSubmit}
         className="w-full max-w-sm bg-white rounded-xl shadow p-6 space-y-4"
       >
-        <h1 className="text-2xl font-semibold">KASC sign in</h1>
+        <>
+          <h1 className="text-2xl font-semibold">{SHOP_NAME}</h1>
+          <p className="text-sm text-slate-500 -mt-2">Sign in to continue</p>
+        </>
         <div>
           <label className="block text-sm mb-1">Email</label>
           <input
