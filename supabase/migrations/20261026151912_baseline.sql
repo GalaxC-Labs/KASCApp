@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict E6rKJksha3eyMcbHsOgxJlYMYKL7fdHujkIZpJ1BhKNarhnNLJQmEKamkHfKuEs
+\restrict 37GBvbHzoH8rciTXnCSaoI0GK4jFBMxbM5KOWhFOR2xhOtQMKUWox9gaEbTIOKx
 
 -- Dumped from database version 17.11
 -- Dumped by pg_dump version 17.11
@@ -1127,62 +1127,6 @@ $$;
 
 
 --
--- Name: update_app_settings(text, text, text, text, integer); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.update_app_settings(p_shop_name text, p_shop_address text, p_shop_phone text, p_bill_footer text, p_unpaid_days_threshold integer) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-
-declare
-
-  v_uid uuid := auth.uid();
-
-begin
-
-  if v_uid is null or not public.is_owner() then
-
-    raise exception 'Owner only' using errcode = '42501';
-
-  end if;
-
-  if p_unpaid_days_threshold is null or p_unpaid_days_threshold < 1 then
-
-    raise exception 'Unpaid days threshold must be at least 1' using errcode = '22023';
-
-  end if;
-
-  update public.app_settings set
-
-    shop_name = coalesce(nullif(trim(p_shop_name), ''), 'Shop'),
-
-    shop_address = coalesce(trim(p_shop_address), ''),
-
-    shop_phone = coalesce(trim(p_shop_phone), ''),
-
-    bill_footer = coalesce(nullif(trim(p_bill_footer), ''), 'Thank you for your business.'),
-
-    unpaid_days_threshold = p_unpaid_days_threshold,
-
-    updated_at = now()
-
-  where id = 1;
-
-  insert into public.audit_log(actor_id, action, entity_type, entity_id, details)
-
-  values (v_uid, 'settings.update', 'app_settings', '1',
-
-          jsonb_build_object('unpaid_days', p_unpaid_days_threshold));
-
-  return jsonb_build_object('ok', true);
-
-end;
-
-$$;
-
-
---
 -- Name: update_app_settings(text, text, text, text, text, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2068,5 +2012,5 @@ CREATE POLICY stock_movements_read_owner ON public.stock_movements FOR SELECT TO
 -- PostgreSQL database dump complete
 --
 
-\unrestrict E6rKJksha3eyMcbHsOgxJlYMYKL7fdHujkIZpJ1BhKNarhnNLJQmEKamkHfKuEs
+\unrestrict 37GBvbHzoH8rciTXnCSaoI0GK4jFBMxbM5KOWhFOR2xhOtQMKUWox9gaEbTIOKx
 
