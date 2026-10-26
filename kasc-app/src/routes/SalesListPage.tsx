@@ -138,19 +138,25 @@ export function SalesListPage() {
               <option value="paid">Paid</option>
               <option value="voided">Voided</option>
             </select>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="border rounded px-2 py-2 text-sm w-full"
-              />
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="border rounded px-2 py-2 text-sm w-full"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className="block text-xs text-slate-500 mb-0.5">From</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="border rounded px-2 py-2 text-sm w-full"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-xs text-slate-500 mb-0.5">To</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="border rounded px-2 py-2 text-sm w-full"
+                />
+              </label>
             </div>
           </div>
 

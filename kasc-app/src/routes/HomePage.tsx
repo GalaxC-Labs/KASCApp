@@ -142,7 +142,7 @@ export function HomePage() {
 
         <div className="bg-white rounded-xl shadow p-4">
           <div className="flex items-baseline justify-between mb-3">
-            <h2 className="font-semibold">Low stock</h2>
+            <h2 className="font-semibold">Stock alerts</h2>
             {lowStock.length > 0 && (
               <span className="text-xs bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">
                 {lowStock.length} item{lowStock.length === 1 ? '' : 's'}
@@ -156,7 +156,7 @@ export function HomePage() {
             <div className="py-4 text-center space-y-1">
               <div className="text-2xl">✅</div>
               <p className="text-sm text-slate-500">
-                All products are well-stocked.
+                Nothing to reorder. All products are above their thresholds.
               </p>
             </div>
           ) : (

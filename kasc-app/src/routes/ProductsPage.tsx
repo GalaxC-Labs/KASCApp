@@ -146,7 +146,25 @@ export function ProductsPage() {
     });
     setFormError(null);
   }
-
+  async function handleToggleActive(p: Product) {
+    if (!isOwner) return;
+    const verb = p.is_active ? 'Deactivate' : 'Reactivate';
+    const detail = p.is_active
+      ? 'It will be hidden from the sales screen but kept in all history.'
+      : 'It will become available again on the sales screen.';
+    if (!confirm(`${verb} "${p.name}"?\n\n${detail}`)) return;
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: !p.is_active })
+        .eq('id', p.id);
+      if (error) throw error;
+      push(p.is_active ? 'Product deactivated' : 'Product reactivated', 'success');
+      await load();
+    } catch (err) {
+      push(friendlyMessage(err), 'error');
+    }
+  }
   async function submitForm(e: FormEvent) {
     e.preventDefault();
     if (!editing) return;
@@ -316,7 +334,7 @@ export function ProductsPage() {
               <thead className="text-left text-slate-500 border-b bg-slate-50">
                 <tr>
                   <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">SKU</th>
+                  <th className="px-4 py-2">Code</th>
                   <th className="px-4 py-2 text-right">Price</th>
                   {isOwner && <th className="px-4 py-2 text-right">Cost</th>}
                   <th className="px-4 py-2 text-right">Stock</th>
@@ -376,9 +394,20 @@ export function ProductsPage() {
                           </button>
                           <button
                             onClick={() => openEdit(p)}
-                            className="border rounded px-2 py-1 text-xs"
+                            className="border rounded px-2 py-1 text-xs mr-1"
                           >
                             Edit
+                          </button>
+                          <button
+                            onClick={() => handleToggleActive(p)}
+                            className={
+                              'border rounded px-2 py-1 text-xs ' +
+                              (p.is_active
+                                ? 'border-red-300 text-red-700'
+                                : '')
+                            }
+                          >
+                            {p.is_active ? 'Deactivate' : 'Restore'}
                           </button>
                         </td>
                       )}
@@ -431,7 +460,7 @@ export function ProductsPage() {
                       </div>
                     </div>
                     {isOwner && (
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-1.5 flex-wrap">
                         <button
                           onClick={() => {
                             setAdjusting(p);
@@ -449,6 +478,17 @@ export function ProductsPage() {
                           className="border rounded px-2 py-1 text-xs flex-1"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(p)}
+                          className={
+                            'border rounded px-2 py-1 text-xs flex-1 ' +
+                            (p.is_active
+                              ? 'border-red-300 text-red-700'
+                              : '')
+                          }
+                        >
+                          {p.is_active ? 'Deactivate' : 'Restore'}
                         </button>
                       </div>
                     )}
@@ -484,7 +524,7 @@ export function ProductsPage() {
 
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm">
-                <span className="text-slate-500">SKU</span>
+                <span className="text-slate-500">Product code</span>
                 <input
                   type="text"
                   value={editing.sku}
