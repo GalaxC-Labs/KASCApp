@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { SHOP_LOGO } from '../lib/config';
+import { SHOP_NAME, SHOP_LOGO } from '../lib/config';
 
 export function TopNav() {
   const { profile, signOut } = useAuth();
@@ -15,7 +15,8 @@ export function TopNav() {
     <nav className="bg-white border-b sticky top-0 z-40 print:hidden">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2 flex items-center gap-3">
         <Link to="/" className="font-semibold shrink-0">
-          {SHOP_LOGO}
+          <span className="hidden sm:inline">{SHOP_NAME}</span>
+          <span className="sm:hidden">{SHOP_LOGO}</span>
         </Link>
         <div className="flex gap-1 overflow-x-auto flex-1 min-w-0">
           <NavLink to="/sales/new" className={linkClass}>

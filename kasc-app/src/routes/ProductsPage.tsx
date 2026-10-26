@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
@@ -20,6 +19,8 @@ type Product = {
   stock_qty: number;
   reorder_level: number;
   is_active: boolean;
+  low_stock_ignored: boolean;
+  low_stock_ignore_note: string;
 };
 
 type ProductForm = {
@@ -48,7 +49,6 @@ const blankForm: ProductForm = {
 type MovementType = 'opening' | 'purchase' | 'purchase_return' | 'adjustment';
 
 export function ProductsPage() {
-  const navigate = useNavigate();
   const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
   const { push } = useToast();
@@ -76,7 +76,7 @@ export function ProductsPage() {
     setError(null);
     const { data, error: pErr } = await supabase
       .from('products')
-      .select('id, sku, name, category, unit, selling_price, stock_qty, reorder_level, is_active')
+      .select('id, sku, name, category, unit, selling_price, stock_qty, reorder_level, is_active, low_stock_ignored, low_stock_ignore_note')
       .order('name');
     if (pErr) {
       setError(pErr.message);
@@ -103,7 +103,7 @@ export function ProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOwner]);
 
-    useEffect(() => {
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setEditing(null);
@@ -146,6 +146,7 @@ export function ProductsPage() {
     });
     setFormError(null);
   }
+
   async function handleToggleActive(p: Product) {
     if (!isOwner) return;
     const verb = p.is_active ? 'Deactivate' : 'Reactivate';
@@ -165,6 +166,17 @@ export function ProductsPage() {
       push(friendlyMessage(err), 'error');
     }
   }
+
+  async function handleUnignore(p: Product) {
+    try {
+      await kasc.unignoreLowStock(p.id);
+      push('Stock alert restored', 'success');
+      await load();
+    } catch (err) {
+      push(friendlyMessage(err), 'error');
+    }
+  }
+
   async function submitForm(e: FormEvent) {
     e.preventDefault();
     if (!editing) return;
@@ -248,22 +260,14 @@ export function ProductsPage() {
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Products</h1>
-          <div className="flex gap-2">
-            {isOwner && (
-              <button
-                onClick={openCreate}
-                className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
-              >
-                Add product
-              </button>
-            )}
+          {isOwner && (
             <button
-              onClick={() => navigate('/')}
-              className="text-sm text-slate-600 hover:underline self-center"
+              onClick={openCreate}
+              className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
             >
-              ← Home
+              Add product
             </button>
-          </div>
+          )}
         </div>
 
         {error && (
@@ -294,92 +298,198 @@ export function ProductsPage() {
           </div>
         </div>
 
-            <div className="bg-white rounded-xl shadow overflow-hidden">
-              {loading ? (
-                <div className="p-4 space-y-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Skeleton className="h-4 flex-1" />
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                  ))}
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          {loading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
-              ) : filtered.length === 0 ? (
-                <div className="p-10 text-center space-y-3">
-                  <div className="text-4xl">📦</div>
-                  <h3 className="font-medium">
-                    {search ? 'No matching products' : 'No products yet'}
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    {search
-                      ? 'Try a different search term.'
-                      : isOwner
-                      ? 'Add your first product to start selling.'
-                      : 'Ask the shop owner to add products.'}
-                  </p>
-                  {isOwner && !search && (
-                    <button
-                      onClick={openCreate}
-                      className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
-                    >
-                      Add product
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <>
-                <div className="hidden md:block">
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-10 text-center space-y-3">
+              <div className="text-4xl">📦</div>
+              <h3 className="font-medium">
+                {search ? 'No matching products' : 'No products yet'}
+              </h3>
+              <p className="text-sm text-slate-500">
+                {search
+                  ? 'Try a different search term.'
+                  : isOwner
+                  ? 'Add your first product to start selling.'
+                  : 'Ask the shop owner to add products.'}
+              </p>
+              {isOwner && !search && (
+                <button
+                  onClick={openCreate}
+                  className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
+                >
+                  Add product
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="hidden md:block">
                 <table className="w-full text-sm">
-              <thead className="text-left text-slate-500 border-b bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">Code</th>
-                  <th className="px-4 py-2 text-right">Price</th>
-                  {isOwner && <th className="px-4 py-2 text-right">Cost</th>}
-                  <th className="px-4 py-2 text-right">Stock</th>
-                  {isOwner && <th className="px-4 py-2"></th>}
-                </tr>
-              </thead>
-              <tbody>
+                  <thead className="text-left text-slate-500 border-b bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Code</th>
+                      <th className="px-4 py-2 text-right">Price</th>
+                      {isOwner && <th className="px-4 py-2 text-right">Cost</th>}
+                      <th className="px-4 py-2 text-right">Stock</th>
+                      {isOwner && <th className="px-4 py-2"></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((p) => {
+                      const low = p.stock_qty <= p.reorder_level;
+                      return (
+                        <tr key={p.id} className="border-b last:border-0">
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>{p.name}</span>
+                              {!p.is_active && (
+                                <span className="text-xs bg-slate-200 text-slate-600 rounded px-2 py-0.5">
+                                  inactive
+                                </span>
+                              )}
+                              {p.low_stock_ignored && (
+                                <span
+                                  className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-0.5"
+                                  title={p.low_stock_ignore_note || 'Stock alert ignored'}
+                                >
+                                  alert off
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {p.category} · {p.unit}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 font-mono text-xs text-slate-500">
+                            {p.sku || '—'}
+                          </td>
+                          <td className="px-4 py-2 text-right">{fmt(p.selling_price)}</td>
+                          {isOwner && (
+                            <td className="px-4 py-2 text-right text-slate-500">
+                              {fmt(costs[p.id] ?? 0)}
+                            </td>
+                          )}
+                          <td
+                            className={
+                              'px-4 py-2 text-right ' + (low ? 'text-amber-700 font-medium' : '')
+                            }
+                          >
+                            {p.stock_qty}
+                            {low && (
+                              <div className="text-xs">reorder @ {p.reorder_level}</div>
+                            )}
+                          </td>
+                          {isOwner && (
+                            <td className="px-4 py-2 text-right whitespace-nowrap">
+                              <button
+                                onClick={() => {
+                                  setAdjusting(p);
+                                  setAdjDelta('');
+                                  setAdjNote('');
+                                  setAdjType('purchase');
+                                  setAdjError(null);
+                                }}
+                                className="border rounded px-2 py-1 text-xs mr-1"
+                              >
+                                Adjust
+                              </button>
+                              <button
+                                onClick={() => openEdit(p)}
+                                className="border rounded px-2 py-1 text-xs mr-1"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => (window.location.href = `/products/${p.id}/history`)}
+                                className="border rounded px-2 py-1 text-xs mr-1"
+                              >
+                                History
+                              </button>
+                              {p.low_stock_ignored && (
+                                <button
+                                  onClick={() => handleUnignore(p)}
+                                  className="border rounded px-2 py-1 text-xs mr-1"
+                                >
+                                  Restore alert
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleToggleActive(p)}
+                                className={
+                                  'border rounded px-2 py-1 text-xs ' +
+                                  (p.is_active ? 'border-red-300 text-red-700' : '')
+                                }
+                              >
+                                {p.is_active ? 'Deactivate' : 'Restore'}
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <ul className="md:hidden divide-y">
                 {filtered.map((p) => {
                   const low = p.stock_qty <= p.reorder_level;
                   return (
-                    <tr key={p.id} className="border-b last:border-0">
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <span>{p.name}</span>
-                          {!p.is_active && (
-                            <span className="text-xs bg-slate-200 text-slate-600 rounded px-2 py-0.5">
-                              inactive
-                            </span>
+                    <li key={p.id} className="p-3 space-y-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium truncate">{p.name}</span>
+                            {!p.is_active && (
+                              <span className="text-xs bg-slate-200 text-slate-600 rounded px-2 py-0.5">
+                                inactive
+                              </span>
+                            )}
+                            {p.low_stock_ignored && (
+                              <span className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                                alert off
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {p.sku ? `${p.sku} · ` : ''}
+                            {p.category} · {p.unit}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-medium">{fmt(p.selling_price)}</div>
+                          {isOwner && (
+                            <div className="text-xs text-slate-500">
+                              cost {fmt(costs[p.id] ?? 0)}
+                            </div>
                           )}
+                          <div
+                            className={
+                              'text-xs mt-0.5 ' +
+                              (low ? 'text-amber-700 font-medium' : 'text-slate-500')
+                            }
+                          >
+                            {p.stock_qty} {p.unit} left
+                            {low && (
+                              <span className="block text-amber-600">
+                                reorder @ {p.reorder_level}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-500">
-                          {p.category} · {p.unit}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs text-slate-500">
-                        {p.sku || '—'}
-                      </td>
-                      <td className="px-4 py-2 text-right">{fmt(p.selling_price)}</td>
+                      </div>
                       {isOwner && (
-                        <td className="px-4 py-2 text-right text-slate-500">
-                          {fmt(costs[p.id] ?? 0)}
-                        </td>
-                      )}
-                      <td
-                        className={
-                          'px-4 py-2 text-right ' + (low ? 'text-amber-700 font-medium' : '')
-                        }
-                      >
-                        {p.stock_qty}
-                        {low && (
-                          <div className="text-xs">reorder @ {p.reorder_level}</div>
-                        )}
-                      </td>
-                      {isOwner && (
-                        <td className="px-4 py-2 text-right whitespace-nowrap">
+                        <div className="flex gap-1.5 flex-wrap">
                           <button
                             onClick={() => {
                               setAdjusting(p);
@@ -388,126 +498,45 @@ export function ProductsPage() {
                               setAdjType('purchase');
                               setAdjError(null);
                             }}
-                            className="border rounded px-2 py-1 text-xs mr-1"
+                            className="border rounded px-2 py-1 text-xs flex-1"
                           >
                             Adjust
                           </button>
                           <button
                             onClick={() => openEdit(p)}
-                            className="border rounded px-2 py-1 text-xs mr-1"
+                            className="border rounded px-2 py-1 text-xs flex-1"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => navigate(`/products/${p.id}/history`)}
-                            className="border rounded px-2 py-1 text-xs mr-1"
+                            onClick={() => (window.location.href = `/products/${p.id}/history`)}
+                            className="border rounded px-2 py-1 text-xs flex-1"
                           >
                             History
                           </button>
+                          {p.low_stock_ignored && (
+                            <button
+                              onClick={() => handleUnignore(p)}
+                              className="border rounded px-2 py-1 text-xs flex-1"
+                            >
+                              Restore alert
+                            </button>
+                          )}
                           <button
                             onClick={() => handleToggleActive(p)}
                             className={
-                              'border rounded px-2 py-1 text-xs ' +
-                              (p.is_active
-                                ? 'border-red-300 text-red-700'
-                                : '')
+                              'border rounded px-2 py-1 text-xs flex-1 ' +
+                              (p.is_active ? 'border-red-300 text-red-700' : '')
                             }
                           >
                             {p.is_active ? 'Deactivate' : 'Restore'}
                           </button>
-                        </td>
+                        </div>
                       )}
-                    </tr>
+                    </li>
                   );
                 })}
-              </tbody>
-            </table>
-            </div>
-            <ul className="md:hidden divide-y">
-              {filtered.map((p) => {
-                const low = p.stock_qty <= p.reorder_level;
-                return (
-                  <li key={p.id} className="p-3 space-y-2">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium truncate">{p.name}</span>
-                          {!p.is_active && (
-                            <span className="text-xs bg-slate-200 text-slate-600 rounded px-2 py-0.5">
-                              inactive
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {p.sku ? `${p.sku} · ` : ''}
-                          {p.category} · {p.unit}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-medium">{fmt(p.selling_price)}</div>
-                        {isOwner && (
-                          <div className="text-xs text-slate-500">
-                            cost {fmt(costs[p.id] ?? 0)}
-                          </div>
-                        )}
-                        <div
-                          className={
-                            'text-xs mt-0.5 ' +
-                            (low ? 'text-amber-700 font-medium' : 'text-slate-500')
-                          }
-                        >
-                          {p.stock_qty} {p.unit} left
-                          {low && (
-                            <span className="block text-amber-600">
-                              reorder @ {p.reorder_level}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {isOwner && (
-                      <div className="flex gap-1.5 flex-wrap">
-                        <button
-                          onClick={() => {
-                            setAdjusting(p);
-                            setAdjDelta('');
-                            setAdjNote('');
-                            setAdjType('purchase');
-                            setAdjError(null);
-                          }}
-                          className="border rounded px-2 py-1 text-xs flex-1"
-                        >
-                          Adjust
-                        </button>
-                        <button
-                          onClick={() => openEdit(p)}
-                          className="border rounded px-2 py-1 text-xs flex-1"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => navigate(`/products/${p.id}/history`)}
-                          className="border rounded px-2 py-1 text-xs flex-1"
-                        >
-                          History
-                        </button>
-                        <button
-                          onClick={() => handleToggleActive(p)}
-                          className={
-                            'border rounded px-2 py-1 text-xs flex-1 ' +
-                            (p.is_active
-                              ? 'border-red-300 text-red-700'
-                              : '')
-                          }
-                        >
-                          {p.is_active ? 'Deactivate' : 'Restore'}
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+              </ul>
             </>
           )}
         </div>

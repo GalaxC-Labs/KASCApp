@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { supabase } from '../lib/supabase';
+import { makeKasc } from '../lib/kasc';
 import { loadAppSettings } from '../lib/settings';
 import { formatCurrency, formatRelative } from '../lib/format';
+import { useToast } from '../lib/toast';
+import { friendlyMessage } from '../lib/errors';
+
+const kasc = makeKasc(supabase);
 
 type LowStockItem = {
   id: string;
@@ -12,6 +17,7 @@ type LowStockItem = {
   stock_qty: number;
   reorder_level: number;
   unit: string;
+  low_stock_ignored: boolean;
 };
 
 type TodayStats = {
@@ -38,6 +44,8 @@ type UnpaidSummary = {
 
 export function HomePage() {
   const { profile } = useAuth();
+  const isOwner = profile?.role === 'owner';
+  const { push } = useToast();
 
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
   const [lowStockLoading, setLowStockLoading] = useState(true);
@@ -49,8 +57,23 @@ export function HomePage() {
   const [unpaidLoading, setUnpaidLoading] = useState(true);
   const [unpaidDays, setUnpaidDays] = useState(7);
 
+  async function loadLowStock() {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, sku, stock_qty, reorder_level, unit, low_stock_ignored')
+      .eq('is_active', true)
+      .order('name');
+    const low = ((data ?? []) as LowStockItem[]).filter(
+      (p) => Number(p.stock_qty) <= Number(p.reorder_level) && !p.low_stock_ignored,
+    );
+    setLowStock(low);
+    setLowStockLoading(false);
+  }
+
   useEffect(() => {
     let active = true;
+
+    loadLowStock();
 
     (async () => {
       const settings = await loadAppSettings(supabase);
@@ -60,12 +83,7 @@ export function HomePage() {
       today.setHours(0, 0, 0, 0);
       const cutoff = new Date(Date.now() - threshold * 24 * 60 * 60 * 1000);
 
-      const [productsRes, todaySalesRes, recentRes, unpaidRes] = await Promise.all([
-        supabase
-          .from('products')
-          .select('id, name, sku, stock_qty, reorder_level, unit')
-          .eq('is_active', true)
-          .order('name'),
+      const [todaySalesRes, recentRes, unpaidRes] = await Promise.all([
         supabase
           .from('sales')
           .select('total, amount_paid, status')
@@ -87,12 +105,6 @@ export function HomePage() {
       if (!active) return;
 
       setUnpaidDays(threshold);
-
-      const low = ((productsRes.data ?? []) as LowStockItem[]).filter(
-        (p) => Number(p.stock_qty) <= Number(p.reorder_level),
-      );
-      setLowStock(low);
-      setLowStockLoading(false);
 
       const rows = (todaySalesRes.data ?? []) as Array<{ total: number; amount_paid: number }>;
       const count = rows.length;
@@ -122,6 +134,20 @@ export function HomePage() {
       active = false;
     };
   }, []);
+
+  async function handleIgnore(item: LowStockItem) {
+    const reason = prompt(
+      `Ignore stock alert for "${item.name}"?\n\nOptional reason (e.g. "discontinued", "not restocking"):`,
+    );
+    if (reason === null) return;
+    try {
+      await kasc.ignoreLowStock(item.id, reason);
+      push('Alert ignored', 'success');
+      await loadLowStock();
+    } catch (err) {
+      push(friendlyMessage(err), 'error');
+    }
+  }
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -220,10 +246,18 @@ export function HomePage() {
                         reorder at {p.reorder_level} {p.unit}
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="shrink-0 text-right space-y-1">
                       <div className="text-amber-700 font-medium">
                         {p.stock_qty} {p.unit}
                       </div>
+                      {isOwner && (
+                        <button
+                          onClick={() => handleIgnore(p)}
+                          className="text-xs text-slate-500 underline"
+                        >
+                          Ignore
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}

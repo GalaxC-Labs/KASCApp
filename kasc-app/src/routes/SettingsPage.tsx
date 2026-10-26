@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc, Role } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
@@ -27,7 +26,6 @@ type Tab = 'profile' | 'team' | 'bill' | 'help' | 'about';
 const APP_VERSION = '0.1.0';
 
 export function SettingsPage() {
-  const navigate = useNavigate();
   const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
 
@@ -45,15 +43,7 @@ export function SettingsPage() {
   return (
     <div className="p-4 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Settings</h1>
-          <button
-            onClick={() => navigate('/')}
-            className="text-sm text-slate-600 hover:underline"
-          >
-            ← Home
-          </button>
-        </div>
+        <h1 className="text-2xl font-semibold">Settings</h1>
 
         {/* Tabs */}
         <div className="border-b overflow-x-auto">

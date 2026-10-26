@@ -98,20 +98,12 @@ export function SalesListPage() {
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Sales</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/sales/new')}
-              className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
-            >
-              New sale
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="text-sm text-slate-600 hover:underline self-center"
-            >
-              ← Home
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/sales/new')}
+            className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
+          >
+            New sale
+          </button>
         </div>
 
         {error && (

@@ -102,7 +102,7 @@ export function makeKasc(supabase: SupabaseClient) {
       if (error) throw asKascError(error);
       return data as { user_id: string; display_name: string };
     },
-        async updateAppSettings(input: {
+    async updateAppSettings(input: {
       shopName: string;
       shopAddress: string;
       shopPhone: string;
@@ -120,6 +120,22 @@ export function makeKasc(supabase: SupabaseClient) {
       return data as { ok: boolean };
     },
     
+    async ignoreLowStock(productId: string, note: string) {
+      const { data, error } = await supabase.rpc('ignore_low_stock', {
+        p_product_id: productId, p_note: note,
+      });
+      if (error) throw asKascError(error);
+      return data as { ok: boolean };
+    },
+
+    async unignoreLowStock(productId: string) {
+      const { data, error } = await supabase.rpc('unignore_low_stock', {
+        p_product_id: productId,
+      });
+      if (error) throw asKascError(error);
+      return data as { ok: boolean };
+    },
+
     async adjustStock(input: {
       productId: string;
       delta: number;
