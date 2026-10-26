@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 9HLBDMT0auZNNVXifQ4i8a0K03tToaQPXxy3drcRuoOMmLVusfWEJWR7gNL4cyI
+\restrict hb1SW1BgvqSIEPUmrsnGb3yVC983Sur5hOdjHqAqybwix8gkBS2cl6KZqdRTyru
 
 -- Dumped from database version 17.11
 -- Dumped by pg_dump version 17.11
@@ -150,10 +150,10 @@ $$;
 
 
 --
--- Name: create_sale(jsonb, text, numeric, numeric, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_sale(jsonb, text, text, numeric, numeric, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_sale(p_items jsonb, p_customer_name text DEFAULT 'Walk-in customer'::text, p_discount numeric DEFAULT 0, p_amount_paid numeric DEFAULT 0, p_client_ref text DEFAULT NULL::text) RETURNS jsonb
+CREATE FUNCTION public.create_sale(p_items jsonb, p_customer_name text DEFAULT 'Walk-in customer'::text, p_customer_phone text DEFAULT ''::text, p_discount numeric DEFAULT 0, p_amount_paid numeric DEFAULT 0, p_client_ref text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -332,9 +332,9 @@ begin
 
   insert into public.sales(
 
-    bill_no, employee_id, customer_name, subtotal, discount, total,
+    bill_no, employee_id, customer_name, customer_phone, subtotal, discount,
 
-    amount_paid, payment_status, client_ref
+    total, amount_paid, payment_status, client_ref
 
   ) values (
 
@@ -342,7 +342,11 @@ begin
 
       lpad(nextval('public.bill_no_seq')::text, 6, '0'),
 
-    v_uid, coalesce(nullif(trim(p_customer_name), ''), 'Walk-in customer'),
+    v_uid,
+
+    coalesce(nullif(trim(p_customer_name), ''), 'Walk-in customer'),
+
+    coalesce(trim(p_customer_phone), ''),
 
     v_subtotal, p_discount, v_total, p_amount_paid, v_payment, p_client_ref
 
@@ -1261,6 +1265,7 @@ CREATE TABLE public.sales (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     client_ref text,
     refunded_amount numeric(12,2) DEFAULT 0 NOT NULL,
+    customer_phone text DEFAULT ''::text NOT NULL,
     CONSTRAINT sales_amount_paid_check CHECK ((amount_paid >= (0)::numeric)),
     CONSTRAINT sales_discount_check CHECK ((discount >= (0)::numeric)),
     CONSTRAINT sales_payment_status_check CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partial'::text, 'paid'::text]))),
@@ -1750,5 +1755,5 @@ CREATE POLICY stock_movements_read_owner ON public.stock_movements FOR SELECT TO
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9HLBDMT0auZNNVXifQ4i8a0K03tToaQPXxy3drcRuoOMmLVusfWEJWR7gNL4cyI
+\unrestrict hb1SW1BgvqSIEPUmrsnGb3yVC983Sur5hOdjHqAqybwix8gkBS2cl6KZqdRTyru
 

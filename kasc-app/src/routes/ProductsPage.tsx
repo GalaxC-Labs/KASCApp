@@ -276,7 +276,7 @@ export function ProductsPage() {
           <div className="flex gap-3 flex-wrap items-center">
             <input
               type="search"
-              placeholder="Search by name, SKU, category…"
+              placeholder="Search by name, code, category…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="border rounded px-3 py-2 text-sm flex-1 min-w-[200px]"
@@ -399,6 +399,12 @@ export function ProductsPage() {
                             Edit
                           </button>
                           <button
+                            onClick={() => navigate(`/products/${p.id}/history`)}
+                            className="border rounded px-2 py-1 text-xs mr-1"
+                          >
+                            History
+                          </button>
+                          <button
                             onClick={() => handleToggleActive(p)}
                             className={
                               'border rounded px-2 py-1 text-xs ' +
@@ -478,6 +484,12 @@ export function ProductsPage() {
                           className="border rounded px-2 py-1 text-xs flex-1"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => navigate(`/products/${p.id}/history`)}
+                          className="border rounded px-2 py-1 text-xs flex-1"
+                        >
+                          History
                         </button>
                         <button
                           onClick={() => handleToggleActive(p)}

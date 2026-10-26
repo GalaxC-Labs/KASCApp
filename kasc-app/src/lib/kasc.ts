@@ -39,6 +39,7 @@ export function makeKasc(supabase: SupabaseClient) {
     async createSale(input: {
       items: SaleItemInput[];
       customerName?: string;
+      customerPhone?: string;
       discount?: number;
       amountPaid?: number;
       clientRef?: string;
@@ -46,6 +47,7 @@ export function makeKasc(supabase: SupabaseClient) {
       const { data, error } = await supabase.rpc('create_sale', {
         p_items: input.items,
         p_customer_name: input.customerName ?? 'Walk-in customer',
+        p_customer_phone: input.customerPhone ?? '',
         p_discount: input.discount ?? 0,
         p_amount_paid: input.amountPaid ?? 0,
         p_client_ref: input.clientRef ?? crypto.randomUUID(),

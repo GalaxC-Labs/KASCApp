@@ -27,6 +27,7 @@ type CartItem = { product: Product; quantity: number };
 type StoredCart = {
   items: { product_id: string; quantity: number }[];
   customerName: string;
+  customerPhone: string;
   discountInput: string;
   paidInput: string;
   paidTouched: boolean;
@@ -65,6 +66,7 @@ export function NewSalePage() {
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [discountInput, setDiscountInput] = useState('');
   const [paidInput, setPaidInput] = useState('');
   const [paidTouched, setPaidTouched] = useState(false);
@@ -107,6 +109,7 @@ export function NewSalePage() {
         if (restored.length > 0) {
           setItems(restored);
           setCustomerName(stored.customerName);
+          setCustomerPhone(stored.customerPhone ?? '');
           setDiscountInput(stored.discountInput);
           setPaidInput(stored.paidInput);
           setPaidTouched(stored.paidTouched);
@@ -123,19 +126,20 @@ export function NewSalePage() {
   // Persist cart on every change
   useEffect(() => {
     if (loadingProducts) return;
-    if (items.length === 0 && !customerName && !discountInput && !paidInput) {
+    if (items.length === 0 && !customerName && !customerPhone && !discountInput && !paidInput) {
       saveStoredCart(null);
       return;
     }
     saveStoredCart({
       items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
       customerName,
+      customerPhone,
       discountInput,
       paidInput,
       paidTouched,
       clientRef,
     });
-  }, [items, customerName, discountInput, paidInput, paidTouched, clientRef, loadingProducts]);
+    }, [items, customerName, customerPhone, discountInput, paidInput, paidTouched, clientRef, loadingProducts]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -206,6 +210,7 @@ export function NewSalePage() {
   function resetForNewSale() {
     setItems([]);
     setCustomerName('');
+    setCustomerPhone('');
     setDiscountInput('');
     setPaidInput('');
     setPaidTouched(false);
@@ -232,6 +237,7 @@ export function NewSalePage() {
           quantity: i.quantity,
         })),
         customerName: customerName.trim() || 'Walk-in customer',
+        customerPhone: customerPhone.trim(),
         discount,
         amountPaid: effectivePaid,
         clientRef,
@@ -240,6 +246,7 @@ export function NewSalePage() {
       push(`Sale recorded · ${result.bill_no}`, 'success');
       setItems([]);
       setCustomerName('');
+      setCustomerPhone('');
       setDiscountInput('');
       setPaidInput('');
       setPaidTouched(false);
@@ -468,17 +475,29 @@ export function NewSalePage() {
               </ul>
             )}
 
-            <div className="space-y-2 text-sm">
-              <label className="block">
-                <span className="text-slate-500">Customer</span>
-                <input
-                  type="text"
-                  placeholder="Walk-in customer"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full border rounded px-3 py-2 mt-1"
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block">
+                  <span className="text-slate-500">Customer</span>
+                  <input
+                    type="text"
+                    placeholder="Walk-in customer"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-slate-500">Phone (optional)</span>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="98765 43210"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                  />
+                </label>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="block">
@@ -510,7 +529,6 @@ export function NewSalePage() {
                   />
                 </label>
               </div>
-            </div>
 
             <dl className="text-sm space-y-1 border-t pt-2">
               <div className="flex justify-between">

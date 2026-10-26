@@ -10,6 +10,7 @@ import { NewSalePage } from './routes/NewSalePage';
 import { SaleDetailPage } from './routes/SaleDetailPage';
 import { SalesListPage } from './routes/SalesListPage';
 import { ProductsPage } from './routes/ProductsPage';
+import { ProductHistoryPage } from './routes/ProductHistoryPage';
 import { SettingsPage } from './routes/SettingsPage';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/sales/new" element={<NewSalePage />} />
               <Route path="/sales/:id" element={<SaleDetailPage />} />
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products/:id/history" element={<ProductHistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 

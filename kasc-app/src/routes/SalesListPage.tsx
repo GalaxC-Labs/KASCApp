@@ -9,6 +9,7 @@ type Sale = {
   id: string;
   bill_no: string;
   customer_name: string;
+  customer_phone: string;
   total: number;
   amount_paid: number;
   refunded_amount: number;
@@ -39,7 +40,7 @@ export function SalesListPage() {
       const { data, error } = await supabase
         .from('sales')
         .select(
-          'id, bill_no, customer_name, total, amount_paid, refunded_amount, payment_status, status, created_at',
+          'id, bill_no, customer_name, customer_phone, total, amount_paid, refunded_amount, payment_status, status, created_at',
         )
         .order('created_at', { ascending: false })
         .limit(200);
@@ -59,7 +60,8 @@ export function SalesListPage() {
       if (
         q &&
         !s.bill_no.toLowerCase().includes(q) &&
-        !s.customer_name.toLowerCase().includes(q)
+        !s.customer_name.toLowerCase().includes(q) &&
+        !(s.customer_phone ?? '').toLowerCase().includes(q)
       ) {
         return false;
       }
@@ -122,7 +124,7 @@ export function SalesListPage() {
           <div className="grid sm:grid-cols-4 gap-2">
             <input
               type="search"
-              placeholder="Bill no. or customer…"
+              placeholder="Bill no., customer, or phone…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="border rounded px-3 py-2 text-sm sm:col-span-2"
@@ -239,7 +241,12 @@ export function SalesListPage() {
                       className="border-b last:border-0 hover:bg-slate-50 cursor-pointer"
                     >
                       <td className="px-4 py-2 font-mono text-xs">{s.bill_no}</td>
-                      <td className="px-4 py-2">{s.customer_name}</td>
+                      <td className="px-4 py-2">
+                        <div>{s.customer_name}</div>
+                        {s.customer_phone && (
+                          <div className="text-xs text-slate-500">{s.customer_phone}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-2 text-slate-500 whitespace-nowrap">
                         {new Date(s.created_at).toLocaleDateString()}
                       </td>
@@ -291,6 +298,9 @@ export function SalesListPage() {
                       <div className="min-w-0">
                         <div className="font-mono text-xs text-slate-500">{s.bill_no}</div>
                         <div className="font-medium truncate">{s.customer_name}</div>
+                        {s.customer_phone && (
+                          <div className="text-xs text-slate-500">{s.customer_phone}</div>
+                        )}
                         <div className="text-xs text-slate-500 mt-0.5">
                           {new Date(s.created_at).toLocaleDateString()}
                         </div>

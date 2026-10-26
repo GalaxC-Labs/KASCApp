@@ -14,6 +14,7 @@ type Sale = {
   bill_no: string;
   employee_id: string;
   customer_name: string;
+  customer_phone: string;
   subtotal: number;
   discount: number;
   total: number;
@@ -164,6 +165,7 @@ export function SaleDetailPage() {
             <h1 className="text-2xl font-semibold">Bill {sale.bill_no}</h1>
             <p className="text-slate-500 text-sm">
               {new Date(sale.created_at).toLocaleString()} · {sale.customer_name}
+              {sale.customer_phone && ` · ${sale.customer_phone}`}
             </p>
           </div>
           <div className="flex gap-2 shrink-0 print:hidden">
