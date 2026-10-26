@@ -264,13 +264,15 @@ export function ProductsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          {loading ? (
-            <div className="p-6 text-slate-500 text-sm">Loading…</div>
-          ) : filtered.length === 0 ? (
-            <div className="p-6 text-slate-500 text-sm">No products.</div>
-          ) : (
-            <table className="w-full text-sm">
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+              {loading ? (
+                <div className="p-6 text-slate-500 text-sm">Loading…</div>
+              ) : filtered.length === 0 ? (
+                <div className="p-6 text-slate-500 text-sm">No products.</div>
+              ) : (
+                <>
+                <div className="hidden md:block">
+                <table className="w-full text-sm">
               <thead className="text-left text-slate-500 border-b bg-slate-50">
                 <tr>
                   <th className="px-4 py-2">Name</th>
@@ -345,6 +347,76 @@ export function ProductsPage() {
                 })}
               </tbody>
             </table>
+            </div>
+            <ul className="md:hidden divide-y">
+              {filtered.map((p) => {
+                const low = p.stock_qty <= p.reorder_level;
+                return (
+                  <li key={p.id} className="p-3 space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium truncate">{p.name}</span>
+                          {!p.is_active && (
+                            <span className="text-xs bg-slate-200 text-slate-600 rounded px-2 py-0.5">
+                              inactive
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {p.sku ? `${p.sku} · ` : ''}
+                          {p.category} · {p.unit}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-medium">{fmt(p.selling_price)}</div>
+                        {isOwner && (
+                          <div className="text-xs text-slate-500">
+                            cost {fmt(costs[p.id] ?? 0)}
+                          </div>
+                        )}
+                        <div
+                          className={
+                            'text-xs mt-0.5 ' +
+                            (low ? 'text-amber-700 font-medium' : 'text-slate-500')
+                          }
+                        >
+                          {p.stock_qty} {p.unit} left
+                          {low && (
+                            <span className="block text-amber-600">
+                              reorder @ {p.reorder_level}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {isOwner && (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => {
+                            setAdjusting(p);
+                            setAdjDelta('');
+                            setAdjNote('');
+                            setAdjType('purchase');
+                            setAdjError(null);
+                          }}
+                          className="border rounded px-2 py-1 text-xs flex-1"
+                        >
+                          Adjust
+                        </button>
+                        <button
+                          onClick={() => openEdit(p)}
+                          className="border rounded px-2 py-1 text-xs flex-1"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            </>
           )}
         </div>
       </div>

@@ -179,6 +179,8 @@ export function SalesListPage() {
           ) : filtered.length === 0 ? (
             <div className="p-6 text-slate-500 text-sm">No sales match these filters.</div>
           ) : (
+            <>
+            <div className="hidden md:block">
             <table className="w-full text-sm">
               <thead className="text-left text-slate-500 border-b bg-slate-50">
                 <tr>
@@ -238,6 +240,57 @@ export function SalesListPage() {
                 })}
               </tbody>
             </table>
+            </div>
+            <ul className="md:hidden divide-y">
+              {filtered.map((s) => {
+                const outstanding = Math.max(0, Number(s.total) - Number(s.amount_paid));
+                return (
+                  <li
+                    key={s.id}
+                    onClick={() => navigate(`/sales/${s.id}`)}
+                    className="p-3 active:bg-slate-100 cursor-pointer"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <div className="font-mono text-xs text-slate-500">{s.bill_no}</div>
+                        <div className="font-medium truncate">{s.customer_name}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {new Date(s.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-medium">{fmt(s.total)}</div>
+                        <div className="text-xs text-slate-500">paid {fmt(s.amount_paid)}</div>
+                        {outstanding > 0.005 && s.status === 'completed' && (
+                          <div className="text-xs text-amber-700">{fmt(outstanding)} due</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-1.5">
+                      {s.status === 'voided' ? (
+                        <span className="text-xs bg-red-100 text-red-700 rounded px-2 py-0.5">
+                          voided
+                        </span>
+                      ) : (
+                        <span
+                          className={
+                            'text-xs rounded px-2 py-0.5 ' +
+                            (s.payment_status === 'paid'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : s.payment_status === 'partial'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-100 text-slate-700')
+                          }
+                        >
+                          {s.payment_status}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            </>
           )}
         </div>
 

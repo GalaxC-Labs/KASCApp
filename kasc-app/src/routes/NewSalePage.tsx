@@ -1,10 +1,12 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc, CreateSaleResult } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
 import { useToast } from '../lib/toast';
 import { formatCurrency as fmt } from '../lib/format';
+
+const CART_KEY = 'kasc.cart.v1';
 
 const kasc = makeKasc(supabase);
 
@@ -21,10 +23,40 @@ type Product = {
 
 type CartItem = { product: Product; quantity: number };
 
+type StoredCart = {
+  items: { product_id: string; quantity: number }[];
+  customerName: string;
+  discountInput: string;
+  paidInput: string;
+  paidTouched: boolean;
+  clientRef: string;
+};
+
+function loadStoredCart(): StoredCart | null {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredCart;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredCart(cart: StoredCart | null) {
+  try {
+    if (!cart) localStorage.removeItem(CART_KEY);
+    else localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch {
+    /* quota errors ignored */
+  }
+}
+
 export function NewSalePage() {
   const navigate = useNavigate();
   const { push } = useToast();
-  
+  const searchRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,7 +68,7 @@ export function NewSalePage() {
   const [paidInput, setPaidInput] = useState('');
   const [paidTouched, setPaidTouched] = useState(false);
 
-  const [clientRef, setClientRef] = useState(() => crypto.randomUUID());
+  const [clientRef, setClientRef] = useState<string>(() => crypto.randomUUID());
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +77,7 @@ export function NewSalePage() {
     items: CartItem[];
   } | null>(null);
 
+  // Load products + restore any saved cart
   useEffect(() => {
     let active = true;
     (async () => {
@@ -54,13 +87,78 @@ export function NewSalePage() {
         .eq('is_active', true)
         .order('name');
       if (!active) return;
-      if (error) setLoadError(error.message);
-      else setProducts(data as Product[]);
+      if (error) {
+        setLoadError(error.message);
+        setLoadingProducts(false);
+        return;
+      }
+      const fetched = data as Product[];
+      setProducts(fetched);
+
+      const stored = loadStoredCart();
+      if (stored) {
+        const byId = new Map(fetched.map((p) => [p.id, p]));
+        const restored: CartItem[] = [];
+        for (const s of stored.items) {
+          const p = byId.get(s.product_id);
+          if (p) restored.push({ product: p, quantity: s.quantity });
+        }
+        if (restored.length > 0) {
+          setItems(restored);
+          setCustomerName(stored.customerName);
+          setDiscountInput(stored.discountInput);
+          setPaidInput(stored.paidInput);
+          setPaidTouched(stored.paidTouched);
+          setClientRef(stored.clientRef);
+        }
+      }
       setLoadingProducts(false);
     })();
     return () => {
       active = false;
     };
+  }, []);
+
+  // Persist cart on every change
+  useEffect(() => {
+    if (loadingProducts) return;
+    if (items.length === 0 && !customerName && !discountInput && !paidInput) {
+      saveStoredCart(null);
+      return;
+    }
+    saveStoredCart({
+      items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
+      customerName,
+      discountInput,
+      paidInput,
+      paidTouched,
+      clientRef,
+    });
+  }, [items, customerName, discountInput, paidInput, paidTouched, clientRef, loadingProducts]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (items.length > 0 && !submitting && formRef.current) {
+          formRef.current.requestSubmit();
+        }
+      }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [items.length, submitting]);
+
+  // Auto-focus search on desktop (avoid mobile keyboard pop)
+  useEffect(() => {
+    if (window.matchMedia('(min-width: 768px)').matches) {
+      searchRef.current?.focus();
+    }
   }, []);
 
   const filtered = useMemo(() => {
@@ -113,6 +211,9 @@ export function NewSalePage() {
     setClientRef(crypto.randomUUID());
     setError(null);
     setSuccess(null);
+    saveStoredCart(null);
+    setSearch('');
+    searchRef.current?.focus();
   }
 
   async function onSubmit(e: FormEvent) {
@@ -137,6 +238,12 @@ export function NewSalePage() {
       setSuccess({ result, items });
       push(`Sale recorded · ${result.bill_no}`, 'success');
       setItems([]);
+      setCustomerName('');
+      setDiscountInput('');
+      setPaidInput('');
+      setPaidTouched(false);
+      setClientRef(crypto.randomUUID());
+      saveStoredCart(null);
     } catch (err) {
       setError(friendlyMessage(err));
     } finally {
@@ -147,7 +254,7 @@ export function NewSalePage() {
   if (success) {
     const { result, items: soldItems } = success;
     return (
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
+      <div className="p-4 sm:p-6">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-6 space-y-4">
           <div>
             <h1 className="text-2xl font-semibold">Sale complete</h1>
@@ -225,16 +332,10 @@ export function NewSalePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
+    <div className="p-4 sm:p-6">
       <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">New sale</h1>
-          <button
-            onClick={() => navigate('/')}
-            className="text-sm text-slate-600 hover:underline"
-          >
-            ← Home
-          </button>
         </div>
 
         {loadError && (
@@ -246,8 +347,9 @@ export function NewSalePage() {
         <div className="grid lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-xl shadow p-4 space-y-3">
             <input
+              ref={searchRef}
               type="search"
-              placeholder="Search products by name, SKU, category…"
+              placeholder="Search products (F2)…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded px-3 py-2"
@@ -289,6 +391,7 @@ export function NewSalePage() {
           </div>
 
           <form
+            ref={formRef}
             onSubmit={onSubmit}
             className="bg-white rounded-xl shadow p-4 space-y-3"
           >
@@ -423,6 +526,13 @@ export function NewSalePage() {
             >
               {submitting ? 'Saving…' : `Complete sale · ${fmt(total)}`}
             </button>
+
+            <p className="text-xs text-slate-400 text-center hidden md:block">
+              <kbd className="border rounded px-1 py-0.5 bg-slate-50">F2</kbd> search ·{' '}
+              <kbd className="border rounded px-1 py-0.5 bg-slate-50">Ctrl</kbd>+
+              <kbd className="border rounded px-1 py-0.5 bg-slate-50">Enter</kbd>{' '}
+              complete
+            </p>
           </form>
         </div>
       </div>
