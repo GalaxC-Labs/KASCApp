@@ -143,15 +143,44 @@ export function makeKasc(supabase: SupabaseClient) {
       delta: number;
       movementType: 'opening' | 'purchase' | 'purchase_return' | 'adjustment';
       note?: string;
+      invoiceNo?: string;
     }) {
       const { data, error } = await supabase.rpc('adjust_stock', {
         p_product_id: input.productId,
         p_quantity_delta: input.delta,
         p_movement_type: input.movementType,
         p_note: input.note ?? '',
+        p_invoice_no: input.invoiceNo ?? '',
       });
       if (error) throw asKascError(error);
       return data as { product_id: string; stock_qty: number };
+    },
+
+    async getStockLedger(input: {
+      productId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }) {
+      const { data, error } = await supabase.rpc('get_stock_ledger', {
+        p_product_id: input.productId || null,
+        p_date_from: input.dateFrom || null,
+        p_date_to: input.dateTo || null,
+      });
+      if (error) throw asKascError(error);
+      return data as Array<{
+        movement_id: string;
+        movement_date: string;
+        invoice_no: string;
+        movement_type: string;
+        product_id: string;
+        product_name: string;
+        product_unit: string;
+        quantity_delta: number;
+        received: number;
+        sales: number;
+        open_stock: number;
+        remaining_stock: number;
+      }>;
     },
 
     async currentProfile() {
