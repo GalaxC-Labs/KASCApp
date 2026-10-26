@@ -148,15 +148,15 @@ export function SaleDetailPage() {
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 print:bg-white print:p-0">
       <div className="max-w-3xl mx-auto space-y-4">
 
-        <div className="hidden print:block text-center mb-2">
-          <h1 className="text-2xl font-bold">{SHOP_NAME}</h1>
+        <div className="hidden print:block text-center mb-4 pb-3 border-b border-slate-400">
+          <h1 className="text-xl font-bold">{SHOP_NAME}</h1>
           {SHOP_ADDRESS && (
-            <p className="text-xs text-slate-600 mt-1">{SHOP_ADDRESS}</p>
+            <p className="text-xs mt-1">{SHOP_ADDRESS}</p>
           )}
           {SHOP_PHONE && (
-            <p className="text-xs text-slate-600">{SHOP_PHONE}</p>
+            <p className="text-xs">{SHOP_PHONE}</p>
           )}
-          <p className="text-xs text-slate-500 mt-1">Sales receipt</p>
+          <p className="text-xs mt-2 uppercase tracking-wider">Sales receipt</p>
         </div>
 
         <div className="flex items-start justify-between gap-2">
@@ -201,11 +201,14 @@ export function SaleDetailPage() {
             </thead>
             <tbody>
               {items.map((i) => (
-                <tr key={i.id} className="border-b last:border-0">
+                <tr
+                  key={i.id}
+                  className="border-b last:border-0 print:break-inside-avoid"
+                >
                   <td className="py-2">{i.product_name_snapshot}</td>
-                  <td className="py-2 text-right">{i.quantity}</td>
-                  <td className="py-2 text-right">{fmt(i.unit_price)}</td>
-                  <td className="py-2 text-right">{fmt(i.line_total)}</td>
+                  <td className="py-2 text-right tabular-nums">{i.quantity}</td>
+                  <td className="py-2 text-right tabular-nums">{fmt(i.unit_price)}</td>
+                  <td className="py-2 text-right tabular-nums">{fmt(i.line_total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -214,7 +217,7 @@ export function SaleDetailPage() {
           <dl className="text-sm space-y-1 pt-2 border-t">
             <div className="flex justify-between">
               <dt className="text-slate-500">Subtotal</dt>
-              <dd>{fmt(sale.subtotal)}</dd>
+              <dd className="tabular-nums">{fmt(sale.subtotal)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-slate-500">Discount</dt>

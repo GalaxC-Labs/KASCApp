@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/useAuth';
 import { formatCurrency as fmt } from '../lib/format';
+import { Skeleton } from '../components/Skeleton';
 
 type Sale = {
   id: string;
@@ -175,9 +176,39 @@ export function SalesListPage() {
 
         <div className="bg-white rounded-xl shadow overflow-hidden">
           {loading ? (
-            <div className="p-6 text-slate-500 text-sm">Loading…</div>
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="p-6 text-slate-500 text-sm">No sales match these filters.</div>
+            <div className="p-10 text-center space-y-3">
+              <div className="text-4xl">🧾</div>
+              <h3 className="font-medium">No sales yet</h3>
+              <p className="text-sm text-slate-500">
+                {search || dateFrom || dateTo || statusFilter !== 'all'
+                  ? 'Try adjusting your filters.'
+                  : 'Sales will appear here once you complete a bill.'}
+              </p>
+              {(search || dateFrom || dateTo || statusFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearch('');
+                    setDateFrom('');
+                    setDateTo('');
+                    setStatusFilter('all');
+                  }}
+                  className="text-sm underline text-slate-600"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
           ) : (
             <>
             <div className="hidden md:block">

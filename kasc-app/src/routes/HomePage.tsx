@@ -153,9 +153,12 @@ export function HomePage() {
           {lowStockLoading ? (
             <p className="text-slate-500 text-sm">Checking…</p>
           ) : lowStock.length === 0 ? (
-            <p className="text-slate-500 text-sm">
-              All products are above their reorder level.
-            </p>
+            <div className="py-4 text-center space-y-1">
+              <div className="text-2xl">✅</div>
+              <p className="text-sm text-slate-500">
+                All products are well-stocked.
+              </p>
+            </div>
           ) : (
             <ul className="divide-y">
               {lowStock.slice(0, 8).map((p) => (

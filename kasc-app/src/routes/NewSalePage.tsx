@@ -5,6 +5,7 @@ import { makeKasc, CreateSaleResult } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
 import { useToast } from '../lib/toast';
 import { formatCurrency as fmt } from '../lib/format';
+import { Skeleton } from '../components/Skeleton';
 
 const CART_KEY = 'kasc.cart.v1';
 
@@ -355,9 +356,26 @@ export function NewSalePage() {
               className="w-full border rounded px-3 py-2"
             />
             {loadingProducts ? (
-              <p className="text-slate-500 text-sm">Loading products…</p>
+              <div className="space-y-3 pt-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                    <Skeleton className="h-8 w-14 rounded" />
+                  </div>
+                ))}
+              </div>
             ) : filtered.length === 0 ? (
-              <p className="text-slate-500 text-sm">No matching products.</p>
+              <div className="py-8 text-center space-y-2">
+                <div className="text-3xl">{search ? '🔍' : '📦'}</div>
+                <p className="text-sm text-slate-500">
+                  {search
+                    ? 'No products match that search.'
+                    : 'No active products. Ask the owner to add some.'}
+                </p>
+              </div>
             ) : (
               <ul className="divide-y max-h-[60vh] overflow-auto">
                 {filtered.map((p) => {
