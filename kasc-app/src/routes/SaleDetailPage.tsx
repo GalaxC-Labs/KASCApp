@@ -135,14 +135,7 @@ export function SaleDetailPage() {
         action === 'pay' ? 'Payment recorded'
         : action === 'refund' ? 'Refund recorded'
         : 'Sale voided';
-      push(
-        action === 'pay'
-          ? 'Payment recorded'
-          : action === 'refund'
-          ? 'Refund recorded'
-          : 'Sale voided',
-        'success',
-      );
+      push(label, 'success');
       await load();
       closeAction();
     } catch (err) {

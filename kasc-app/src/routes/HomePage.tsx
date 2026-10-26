@@ -21,7 +21,6 @@ type TodayStats = {
 
 export function HomePage() {
   const { profile } = useAuth();
-  const isOwner = profile?.role === 'owner';
 
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
   const [lowStockLoading, setLowStockLoading] = useState(true);

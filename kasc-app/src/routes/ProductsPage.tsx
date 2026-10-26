@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
 import { useAuth } from '../auth/useAuth';
+import { useToast } from '../lib/toast';
 import { formatCurrency as fmt } from '../lib/format';
 
 const kasc = makeKasc(supabase);

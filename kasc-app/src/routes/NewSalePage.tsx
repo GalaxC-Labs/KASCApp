@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc, CreateSaleResult } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
+import { useToast } from '../lib/toast';
 import { formatCurrency as fmt } from '../lib/format';
 
 const kasc = makeKasc(supabase);
@@ -360,7 +361,7 @@ export function NewSalePage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="block">
-                  <span className="text-slate-500">Discount ({CURRENCY})</span>
+                  <span className="text-slate-500">Discount</span>
                   <input
                     type="number"
                     min={0}
