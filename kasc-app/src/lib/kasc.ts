@@ -106,6 +106,7 @@ export function makeKasc(supabase: SupabaseClient) {
       shopName: string;
       shopAddress: string;
       shopPhone: string;
+      shopGstin: string;
       billFooter: string;
       unpaidDaysThreshold: number;
     }) {
@@ -113,6 +114,7 @@ export function makeKasc(supabase: SupabaseClient) {
         p_shop_name: input.shopName,
         p_shop_address: input.shopAddress,
         p_shop_phone: input.shopPhone,
+        p_shop_gstin: input.shopGstin,
         p_bill_footer: input.billFooter,
         p_unpaid_days_threshold: input.unpaidDaysThreshold,
       });

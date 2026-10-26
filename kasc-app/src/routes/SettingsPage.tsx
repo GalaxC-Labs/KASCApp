@@ -45,7 +45,6 @@ export function SettingsPage() {
       <div className="max-w-3xl mx-auto space-y-4">
         <h1 className="text-2xl font-semibold">Settings</h1>
 
-        {/* Tabs */}
         <div className="border-b overflow-x-auto">
           <nav className="flex gap-1 min-w-max">
             {visibleTabs.map((t) => (
@@ -89,6 +88,7 @@ function ProfileTab() {
   const [nameSaving, setNameSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
@@ -112,19 +112,46 @@ function ProfileTab() {
   async function savePassword(e: FormEvent) {
     e.preventDefault();
     setPwError(null);
+
+    if (!currentPassword) {
+      setPwError('Enter your current password.');
+      return;
+    }
     if (newPassword.length < 6) {
-      setPwError('Password must be at least 6 characters.');
+      setPwError('New password must be at least 6 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPwError('Passwords do not match.');
+      setPwError('New passwords do not match.');
       return;
     }
+    if (newPassword === currentPassword) {
+      setPwError('New password must be different from current password.');
+      return;
+    }
+    if (!user?.email) {
+      setPwError('No email associated with this account.');
+      return;
+    }
+
     setPwSaving(true);
     try {
+      // Step 1: verify current password by re-authenticating.
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      if (verifyErr) {
+        setPwError('Current password is incorrect.');
+        return;
+      }
+
+      // Step 2: update to the new password.
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
+
       push('Password changed', 'success');
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
@@ -168,9 +195,19 @@ function ProfileTab() {
       <form onSubmit={savePassword} className="bg-white rounded-xl shadow p-4 space-y-3">
         <h2 className="font-semibold">Change password</h2>
         <p className="text-xs text-slate-500">
-          If you don’t remember your current password, sign out and use “Forgot password?”
-          on the login page.
+          Your current password is required as a safety check. If you don’t
+          remember it, sign out and use “Forgot password?” on the login page.
         </p>
+        <label className="block text-sm">
+          <span className="text-slate-500">Current password</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2 mt-1"
+          />
+        </label>
         <label className="block text-sm">
           <span className="text-slate-500">New password</span>
           <input
@@ -182,7 +219,7 @@ function ProfileTab() {
           />
         </label>
         <label className="block text-sm">
-          <span className="text-slate-500">Confirm password</span>
+          <span className="text-slate-500">Confirm new password</span>
           <input
             type="password"
             autoComplete="new-password"
@@ -201,7 +238,7 @@ function ProfileTab() {
           disabled={pwSaving}
           className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50"
         >
-          {pwSaving ? 'Saving…' : 'Change password'}
+          {pwSaving ? 'Changing…' : 'Change password'}
         </button>
       </form>
 
@@ -225,7 +262,7 @@ function ProfileTab() {
 }
 
 /* -------------------------------------------------------- */
-/* Team tab (existing logic, wrapped)                       */
+/* Team tab                                                 */
 /* -------------------------------------------------------- */
 
 function TeamTab() {
@@ -313,8 +350,9 @@ function TeamTab() {
       <div>
         <h2 className="font-semibold">Team</h2>
         <p className="text-xs text-slate-500 mt-1">
-          To add a new member, first create them in Supabase Dashboard → Authentication → Users,
-          then they appear here. Use this page to promote, deactivate, or rename.
+          To add a new member, first create them in Supabase Dashboard →
+          Authentication → Users, then they appear here. Use this page to promote,
+          deactivate, or rename.
         </p>
       </div>
 
@@ -433,6 +471,7 @@ function BillTab() {
         shopName: form.shop_name,
         shopAddress: form.shop_address,
         shopPhone: form.shop_phone,
+        shopGstin: form.shop_gstin,
         billFooter: form.bill_footer,
         unpaidDaysThreshold: form.unpaid_days_threshold,
       });
@@ -451,10 +490,12 @@ function BillTab() {
   return (
     <form onSubmit={save} className="space-y-4">
       <div className="bg-white rounded-xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">Shop details</h2>
-        <p className="text-xs text-slate-500">
-          Printed at the top of every bill.
-        </p>
+        <div>
+          <h2 className="font-semibold">Bill header</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Printed at the top of every receipt, above the items.
+          </p>
+        </div>
         <label className="block text-sm">
           <span className="text-slate-500">Shop name</span>
           <input
@@ -484,7 +525,30 @@ function BillTab() {
           />
         </label>
         <label className="block text-sm">
-          <span className="text-slate-500">Bill footer</span>
+          <span className="text-slate-500">GSTIN (optional)</span>
+          <input
+            type="text"
+            value={form.shop_gstin}
+            onChange={(e) => setForm({ ...form, shop_gstin: e.target.value })}
+            placeholder="27AAPFU0939F1ZV"
+            maxLength={20}
+            className="w-full border rounded px-3 py-2 mt-1 font-mono"
+          />
+          <span className="text-xs text-slate-400 mt-0.5 block">
+            15-character GST identification number, if applicable.
+          </span>
+        </label>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 space-y-3">
+        <div>
+          <h2 className="font-semibold">Bill footer</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Printed at the bottom of every receipt, after the totals.
+          </p>
+        </div>
+        <label className="block text-sm">
+          <span className="text-slate-500">Footer text</span>
           <input
             type="text"
             value={form.bill_footer}
@@ -495,13 +559,21 @@ function BillTab() {
       </div>
 
       <div className="bg-white rounded-xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">Payment reminders</h2>
-        <p className="text-xs text-slate-500">
-          Show unpaid bills older than this on the home dashboard.
-        </p>
-        <label className="block text-sm">
-          <span className="text-slate-500">Days before showing as overdue</span>
+        <div>
+          <h2 className="font-semibold">Payment reminders</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Controls when unpaid bills show up as overdue on the home dashboard.
+          </p>
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor="unpaid-days"
+            className="block text-sm text-slate-500"
+          >
+            Days before showing as overdue
+          </label>
           <input
+            id="unpaid-days"
             type="number"
             min={1}
             required
@@ -509,9 +581,13 @@ function BillTab() {
             onChange={(e) =>
               setForm({ ...form, unpaid_days_threshold: Number(e.target.value) || 1 })
             }
-            className="w-full border rounded px-3 py-2 mt-1 max-w-[120px]"
+            className="w-full border rounded px-3 py-2 max-w-[120px]"
           />
-        </label>
+          <p className="text-xs text-slate-400">
+            Bills with an outstanding balance older than this many days appear
+            on Home under “Unpaid bills”.
+          </p>
+        </div>
       </div>
 
       <div className="bg-slate-100 rounded-xl p-4 space-y-1 text-sm">
@@ -522,6 +598,9 @@ function BillTab() {
           <div className="font-bold">{form.shop_name || '—'}</div>
           {form.shop_address && <div className="text-xs">{form.shop_address}</div>}
           {form.shop_phone && <div className="text-xs">{form.shop_phone}</div>}
+          {form.shop_gstin && (
+            <div className="text-xs font-mono">GSTIN: {form.shop_gstin}</div>
+          )}
           <div className="text-xs uppercase tracking-wider mt-1">Sales receipt</div>
         </div>
         <div className="text-xs italic text-center">{form.bill_footer || '—'}</div>
@@ -597,7 +676,6 @@ function HelpTab() {
             <li>Find the sale on <strong>Sales history</strong> or via the <strong>Unpaid bills</strong> card on Home</li>
             <li>Click <strong>Record payment</strong></li>
             <li>Enter the amount received, click <strong>Confirm</strong></li>
-            <li>The bill becomes <strong>paid</strong> if that clears the balance</li>
           </ol>
         </details>
         <details className="text-sm">
@@ -606,7 +684,7 @@ function HelpTab() {
             <li>Open the sale from <strong>Sales history</strong></li>
             <li>Click <strong>Record refund</strong></li>
             <li>Enter the refund amount, click <strong>Confirm</strong></li>
-            <li>If the entire sale is returned, refund the full amount then click <strong>Void sale</strong> (restores stock)</li>
+            <li>If fully returned, refund the full amount then click <strong>Void sale</strong></li>
           </ol>
         </details>
         {isOwner && (
@@ -616,9 +694,8 @@ function HelpTab() {
               <li>Go to <strong>Products</strong></li>
               <li>Click <strong>Adjust</strong> on the product</li>
               <li>Enter the quantity received (e.g. <code>50</code>)</li>
-              <li>Pick reason "Purchase" — enter invoice number in the note</li>
+              <li>Pick reason “Purchase” — enter invoice number in the note</li>
               <li>Click <strong>Apply</strong></li>
-              <li>Stock is updated and a movement is recorded for the product history</li>
             </ol>
           </details>
         )}
@@ -627,8 +704,8 @@ function HelpTab() {
       <div className="bg-white rounded-xl shadow p-4 space-y-2 text-sm">
         <h2 className="font-semibold">Still stuck?</h2>
         <p className="text-slate-600">
-          Ask the shop owner for help. If it’s a technical problem (something broke),
-          contact your developer.
+          Ask the shop owner for help. If it’s a technical problem, contact your
+          developer.
         </p>
         {(SHOP_PHONE || SHOP_ADDRESS) && (
           <p className="text-xs text-slate-500">
@@ -675,8 +752,8 @@ function AboutTab() {
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
         <p className="font-medium">A note on data</p>
         <p className="mt-1">
-          Your sales, products and payments are backed up daily. If you ever notice
-          something unexpected, contact your developer right away — don’t try to fix
+          Your sales, products and payments are backed up daily. If you ever
+          notice something unexpected, contact your developer — don’t try to fix
           it in the database directly.
         </p>
       </div>

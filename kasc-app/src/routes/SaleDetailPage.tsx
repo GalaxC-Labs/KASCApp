@@ -161,6 +161,9 @@ export function SaleDetailPage() {
           {(settings.shop_phone || SHOP_PHONE) && (
             <p className="text-xs">{settings.shop_phone || SHOP_PHONE}</p>
           )}
+          {settings.shop_gstin && (
+            <p className="text-xs font-mono">GSTIN: {settings.shop_gstin}</p>
+          )}
           <p className="text-xs mt-2 uppercase tracking-wider">Sales receipt</p>
         </div>
 
