@@ -6,6 +6,7 @@ import { friendlyMessage } from '../lib/errors';
 import { useAuth } from '../auth/useAuth';
 import { useToast } from '../lib/toast';
 import { formatCurrency as fmt } from '../lib/format';
+import { Skeleton } from '../components/Skeleton';
 
 const kasc = makeKasc(supabase);
 
@@ -101,6 +102,17 @@ export function ProductsPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOwner]);
+
+    useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setEditing(null);
+        setAdjusting(null);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -266,9 +278,37 @@ export function ProductsPage() {
 
             <div className="bg-white rounded-xl shadow overflow-hidden">
               {loading ? (
-                <div className="p-6 text-slate-500 text-sm">Loading…</div>
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-4 flex-1" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  ))}
+                </div>
               ) : filtered.length === 0 ? (
-                <div className="p-6 text-slate-500 text-sm">No products.</div>
+                <div className="p-10 text-center space-y-3">
+                  <div className="text-4xl">📦</div>
+                  <h3 className="font-medium">
+                    {search ? 'No matching products' : 'No products yet'}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {search
+                      ? 'Try a different search term.'
+                      : isOwner
+                      ? 'Add your first product to start selling.'
+                      : 'Ask the shop owner to add products.'}
+                  </p>
+                  {isOwner && !search && (
+                    <button
+                      onClick={openCreate}
+                      className="bg-slate-900 text-white rounded px-3 py-1.5 text-sm"
+                    >
+                      Add product
+                    </button>
+                  )}
+                </div>
               ) : (
                 <>
                 <div className="hidden md:block">
