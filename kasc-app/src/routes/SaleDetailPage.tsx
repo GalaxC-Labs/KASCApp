@@ -7,7 +7,6 @@ import { loadAppSettings, AppSettings, defaultSettings } from '../lib/settings';
 import { formatCurrency as fmt } from '../lib/format';
 import { useToast } from '../lib/toast';
 import { SHOP_NAME, SHOP_ADDRESS, SHOP_PHONE } from '../lib/config';
-import { loadAppSettings, AppSettings, defaultSettings } from '../lib/settings';
 
 const kasc = makeKasc(supabase);
 
