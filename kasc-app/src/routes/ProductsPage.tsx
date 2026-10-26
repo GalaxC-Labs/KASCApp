@@ -68,6 +68,7 @@ export function ProductsPage() {
   const [adjDelta, setAdjDelta] = useState('');
   const [adjType, setAdjType] = useState<MovementType>('purchase');
   const [adjNote, setAdjNote] = useState('');
+  const [adjInvoice, setAdjInvoice] = useState('');
   const [adjSaving, setAdjSaving] = useState(false);
   const [adjError, setAdjError] = useState<string | null>(null);
 
@@ -241,12 +242,14 @@ export function ProductsPage() {
         delta,
         movementType: adjType,
         note: adjNote,
+        invoiceNo: adjInvoice,
       });
       push('Stock adjusted', 'success');
       await load();
       setAdjusting(null);
       setAdjDelta('');
       setAdjNote('');
+      setAdjInvoice('');
       setAdjType('purchase');
     } catch (err) {
       setAdjError(friendlyMessage(err));
@@ -710,6 +713,17 @@ export function ProductsPage() {
                 <option value="opening">Opening balance</option>
                 <option value="adjustment">Adjustment (count correction)</option>
               </select>
+            </label>
+
+            <label className="block text-sm">
+              <span className="text-slate-500">Invoice no. (for purchases)</span>
+              <input
+                type="text"
+                value={adjInvoice}
+                onChange={(e) => setAdjInvoice(e.target.value)}
+                placeholder="e.g. INV-2026-0042"
+                className="w-full border rounded px-3 py-2 mt-1 font-mono"
+              />
             </label>
 
             <label className="block text-sm">

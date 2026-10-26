@@ -28,6 +28,9 @@ export function TopNav() {
           <NavLink to="/products" className={linkClass}>
             Products
           </NavLink>
+          <NavLink to="/reports/stock-ledger" className={linkClass}>
+            Ledger
+          </NavLink>
           <NavLink to="/settings" className={linkClass}>
             Settings
           </NavLink>

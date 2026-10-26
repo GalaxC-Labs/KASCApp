@@ -12,6 +12,7 @@ import { SalesListPage } from './routes/SalesListPage';
 import { ProductsPage } from './routes/ProductsPage';
 import { ProductHistoryPage } from './routes/ProductHistoryPage';
 import { SettingsPage } from './routes/SettingsPage';
+import { StockLedgerPage } from './routes/StockLedgerPage';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="/sales/new" element={<NewSalePage />} />
               <Route path="/sales/:id" element={<SaleDetailPage />} />
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/reports/stock-ledger" element={<StockLedgerPage />} />
               <Route path="/products/:id/history" element={<ProductHistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
