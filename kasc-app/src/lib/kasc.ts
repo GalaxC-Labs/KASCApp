@@ -102,6 +102,24 @@ export function makeKasc(supabase: SupabaseClient) {
       if (error) throw asKascError(error);
       return data as { user_id: string; display_name: string };
     },
+        async updateAppSettings(input: {
+      shopName: string;
+      shopAddress: string;
+      shopPhone: string;
+      billFooter: string;
+      unpaidDaysThreshold: number;
+    }) {
+      const { data, error } = await supabase.rpc('update_app_settings', {
+        p_shop_name: input.shopName,
+        p_shop_address: input.shopAddress,
+        p_shop_phone: input.shopPhone,
+        p_bill_footer: input.billFooter,
+        p_unpaid_days_threshold: input.unpaidDaysThreshold,
+      });
+      if (error) throw asKascError(error);
+      return data as { ok: boolean };
+    },
+    
     async adjustStock(input: {
       productId: string;
       delta: number;

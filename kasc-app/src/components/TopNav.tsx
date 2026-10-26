@@ -4,7 +4,6 @@ import { SHOP_LOGO } from '../lib/config';
 
 export function TopNav() {
   const { profile, signOut } = useAuth();
-  const isOwner = profile?.role === 'owner';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     'px-3 py-1.5 rounded text-sm whitespace-nowrap ' +
@@ -28,11 +27,9 @@ export function TopNav() {
           <NavLink to="/products" className={linkClass}>
             Products
           </NavLink>
-          {isOwner && (
-            <NavLink to="/settings" className={linkClass}>
-              Settings
-            </NavLink>
-          )}
+          <NavLink to="/settings" className={linkClass}>
+            Settings
+          </NavLink>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-slate-500 hidden sm:inline">

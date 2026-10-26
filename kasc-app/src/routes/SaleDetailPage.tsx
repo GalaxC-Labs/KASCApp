@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { makeKasc } from '../lib/kasc';
 import { friendlyMessage } from '../lib/errors';
+import { loadAppSettings, AppSettings, defaultSettings } from '../lib/settings';
 import { formatCurrency as fmt } from '../lib/format';
 import { useToast } from '../lib/toast';
 import { SHOP_NAME, SHOP_ADDRESS, SHOP_PHONE } from '../lib/config';
+import { loadAppSettings, AppSettings, defaultSettings } from '../lib/settings';
 
 const kasc = makeKasc(supabase);
 
@@ -59,22 +61,25 @@ export function SaleDetailPage() {
   const [noteInput, setNoteInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 
   async function load() {
     if (!id) return;
     setLoading(true);
     setError(null);
-    const [saleRes, itemsRes, payRes, refRes] = await Promise.all([
+    const [saleRes, itemsRes, payRes, refRes, settingsData] = await Promise.all([
       supabase.from('sales').select('*').eq('id', id).maybeSingle(),
       supabase.from('sale_items').select('*').eq('sale_id', id).order('id'),
       supabase.from('payments').select('*').eq('sale_id', id).order('created_at'),
       supabase.from('refunds').select('*').eq('sale_id', id).order('created_at'),
+      loadAppSettings(supabase),
     ]);
     if (saleRes.error) setError(saleRes.error.message);
     else setSale(saleRes.data as Sale | null);
     setItems((itemsRes.data ?? []) as SaleItem[]);
     setPayments((payRes.data ?? []) as Ledger[]);
     setRefunds((refRes.data ?? []) as Ledger[]);
+    setSettings(settingsData as AppSettings);
     setLoading(false);
   }
 
@@ -150,12 +155,12 @@ export function SaleDetailPage() {
       <div className="max-w-3xl mx-auto space-y-4">
 
         <div className="hidden print:block text-center mb-4 pb-3 border-b border-slate-400">
-          <h1 className="text-xl font-bold">{SHOP_NAME}</h1>
-          {SHOP_ADDRESS && (
-            <p className="text-xs mt-1">{SHOP_ADDRESS}</p>
+          <h1 className="text-xl font-bold">{settings.shop_name || SHOP_NAME}</h1>
+          {(settings.shop_address || SHOP_ADDRESS) && (
+            <p className="text-xs mt-1">{settings.shop_address || SHOP_ADDRESS}</p>
           )}
-          {SHOP_PHONE && (
-            <p className="text-xs">{SHOP_PHONE}</p>
+          {(settings.shop_phone || SHOP_PHONE) && (
+            <p className="text-xs">{settings.shop_phone || SHOP_PHONE}</p>
           )}
           <p className="text-xs mt-2 uppercase tracking-wider">Sales receipt</p>
         </div>
@@ -388,7 +393,7 @@ export function SaleDetailPage() {
         )}
 
         <p className="hidden print:block text-center text-xs text-slate-500 pt-4">
-          Thank you for your business.
+          {settings.bill_footer || 'Thank you for your business.'}
         </p>
       </div>
     </div>

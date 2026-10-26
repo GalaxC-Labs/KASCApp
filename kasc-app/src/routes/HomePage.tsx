@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { supabase } from '../lib/supabase';
+import { loadAppSettings } from '../lib/settings';
 import { formatCurrency, formatRelative } from '../lib/format';
 
 type LowStockItem = {
@@ -35,8 +36,6 @@ type UnpaidSummary = {
   total_due: number;
 };
 
-const UNPAID_DAYS = 7;
-
 export function HomePage() {
   const { profile } = useAuth();
 
@@ -48,14 +47,18 @@ export function HomePage() {
   const [recentLoading, setRecentLoading] = useState(true);
   const [unpaid, setUnpaid] = useState<UnpaidSummary>({ count: 0, total_due: 0 });
   const [unpaidLoading, setUnpaidLoading] = useState(true);
+  const [unpaidDays, setUnpaidDays] = useState(7);
 
   useEffect(() => {
     let active = true;
 
     (async () => {
+      const settings = await loadAppSettings(supabase);
+      const threshold = settings.unpaid_days_threshold;
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const cutoff = new Date(Date.now() - UNPAID_DAYS * 24 * 60 * 60 * 1000);
+      const cutoff = new Date(Date.now() - threshold * 24 * 60 * 60 * 1000);
 
       const [productsRes, todaySalesRes, recentRes, unpaidRes] = await Promise.all([
         supabase
@@ -82,6 +85,8 @@ export function HomePage() {
       ]);
 
       if (!active) return;
+
+      setUnpaidDays(threshold);
 
       const low = ((productsRes.data ?? []) as LowStockItem[]).filter(
         (p) => Number(p.stock_qty) <= Number(p.reorder_level),
@@ -247,14 +252,14 @@ export function HomePage() {
               <div className="py-4 text-center space-y-1">
                 <div className="text-2xl">👍</div>
                 <p className="text-sm text-slate-500">
-                  No bills older than {UNPAID_DAYS} days with a balance.
+                  No bills older than {unpaidDays} days with a balance.
                 </p>
               </div>
             ) : (
               <>
                 <p className="text-sm text-slate-600">
                   <strong>{unpaid.count}</strong> bill{unpaid.count === 1 ? '' : 's'} with
-                  a balance over {UNPAID_DAYS} days old.
+                  a balance over {unpaidDays} days old.
                 </p>
                 <p className="text-xl font-semibold text-red-700 mt-2">
                   {formatCurrency(unpaid.total_due)}
